@@ -163,7 +163,8 @@ export async function lintDetailed(inputs: LintInput[], opts: LintOptions = {}):
     throw e;
   } finally {
     if (timer) clearTimeout(timer);
-    await closeBrowser(browser);
+    // After a timeout a page is stuck in a script loop: kill the browser process right away (force).
+    await closeBrowser(browser, { force: timedOut });
     // If the browser was still launching at the deadline, give work() a moment to close it.
     if (timedOut) await Promise.race([running.catch(() => undefined), new Promise<void>((res) => setTimeout(res, 8000).unref())]);
   }

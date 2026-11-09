@@ -7,9 +7,10 @@
   /* Monospace + ch units keep line breaks stable across machines. */
   body { margin: 0; font: 16px/1.4 monospace; color: #111; background: #fff; }
   section { position: relative; padding: 24px; }
-  /* 1 orphan_punct: the "." after the inline-block chip does not fit and starts line 3 */
+  /* 1 orphan_punct: the "." after the inline-block chip does not fit and starts line 3.
+     The chip is as wide as the column, so this holds for any font (CI machines may lack the local monospace font). */
   #s-orphan .col { width: 19ch; margin: 0; }
-  #s-orphan .chip { display: inline-block; }
+  #s-orphan .chip { display: inline-block; width: 100%; white-space: nowrap; }
   /* 2 overlap_text: two absolutely positioned headings drawn on top of each other */
   #s-overlap { height: 120px; }
   #s-overlap h2 { position: absolute; top: 20px; left: 24px; margin: 0; font-size: 28px; }

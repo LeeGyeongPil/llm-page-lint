@@ -170,16 +170,28 @@ function sanitizeCandidates(list: RawDetectResult['contrastCandidates']): RawDet
     }));
 }
 
+/** Wait for `p` but never longer than `ms` (the timer does not keep node alive). */
+function capped(p: Promise<unknown>, ms: number): Promise<void> {
+  return Promise.race([p.then(() => undefined, () => undefined), new Promise<void>((res) => setTimeout(res, ms).unref())]);
+}
+
 /**
  * Close a browser without ever hanging the caller. A normal close gets a short grace period
  * (3 s); if the browser is frozen, its process is killed.
+ * With `force` (used after a timeout, when a page is known to be stuck) the process is killed first,
+ * so the time limit does not depend on how long a frozen browser takes to refuse a polite close.
  */
-export async function closeBrowser(browser: Browser | undefined): Promise<void> {
+export async function closeBrowser(browser: Browser | undefined, opts: { force?: boolean } = {}): Promise<void> {
   if (!browser) return;
   const t0 = Date.now();
-  await Promise.race([browser.close().catch(() => undefined), new Promise<void>((res) => setTimeout(res, 3000).unref())]);
   const server = servers.get(browser);
-  if (server) await Promise.race([server.kill().catch(() => undefined), new Promise<void>((res) => setTimeout(res, 5000).unref())]);
+  if (opts.force && server) {
+    await capped(server.kill(), 5000); // 멈춘 페이지: 정중한 close 를 기다리지 않고 프로세스부터 끝낸다
+    await capped(browser.close(), 1000); // 끊긴 연결을 정리해 isConnected() 가 false 가 되게 한다
+  } else {
+    await capped(browser.close(), 3000);
+    if (server) await capped(server.kill(), 5000);
+  }
   servers.delete(browser);
-  if (process.env.LLM_PAGE_LINT_DEBUG) console.error(`closeBrowser: ${Date.now() - t0} ms, connected=${browser.isConnected()}`);
+  if (process.env.LLM_PAGE_LINT_DEBUG) console.error(`closeBrowser: ${Date.now() - t0} ms, force=${!!opts.force}, connected=${browser.isConnected()}`);
 }
