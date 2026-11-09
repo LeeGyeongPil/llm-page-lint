@@ -93,7 +93,7 @@ report: /tmp/lint-out/report.html
 |---|---|---|
 | `check <입력...>` | 검사. 입력은 `.html` 파일·폴더·http(s) URL | `check page.html` |
 | `--viewports <목록>` | 화면 너비(px) 목록. 기본 375,768,1280 | `--viewports 375,1280` |
-| `--out <폴더>` | 보고서 저장 위치. 기본은 사용자 캐시 폴더(마지막 줄에 경로 출력) | `--out /tmp/lint-out` |
+| `--out <폴더>` | 보고서 저장 위치. 기본은 `~/.cache/llm-page-lint/runs/`(`$XDG_CACHE_HOME` 가 있으면 그 아래)이며 마지막 줄에 경로 출력 | `--out /tmp/lint-out` |
 | `--json` | 요약 대신 JSON 보고서를 표준 출력으로 | `--json > r.json` |
 | `--fail-on <종류,...>` | 이 종류만 종료 코드 1 에 반영, 나머지는 경고 | `--fail-on clipped_text` |
 | `--ignore <선택자>` | 해당 요소(와 안쪽)는 검사 제외(여러 번 가능) | `--ignore .ad-slot` |
@@ -145,11 +145,12 @@ node dist/cli.js check fixtures/defects.html --viewports 1024 --fail-on clipped_
 ### 시나리오 4 — 라이브러리로 쓰기
 ```js
 import { lint } from './dist/index.js';
-const report = await lint({ file: 'fixtures/defects.html' }, { viewports: [1024] });
-console.log(`${report.findings.length} findings`);
+const file = 'fixtures/defects.html';
+const report = await lint({ file }, { viewports: [1024] });
+console.log(`${report.findings.length} findings in ${file}`);
 for (const f of report.findings) console.log(`- ${f.kind} ${f.selector}`);
 ```
-저장소에 같은 내용의 예제가 들어 있습니다.
+저장소에 거의 같은 예제가 들어 있습니다(파일 경로를 절대 경로로 출력하는 점만 다릅니다).
 ```bash
 node examples/api.mjs
 ```
@@ -252,7 +253,9 @@ axe-core 의 위반 3건은 페이지 구조(랜드마크·제목·영역) 규�
 | 컨테이너·CI 에서 SIGTRAP 으로 실패 | 샌드박스 권한 | `LLM_PAGE_LINT_BROWSER_ARGS=--no-sandbox` |
 | 종료 코드 3 | 페이지가 스크립트 루프에 빠졌거나 `--timeout` 이 너무 짧음 | 값을 늘리거나 페이지의 스크립트를 점검 |
 | 컴퓨터마다 줄바꿈 위치·결과가 다름 | 글꼴 차이 | CI 에서는 고정된 Docker 이미지로 실행, 뷰포트 고정 |
-| 보고서를 못 찾겠음 | `--out` 을 안 줌 | 출력 마지막 줄의 `report:` 경로 확인 |
+| 보고서를 못 찾겠음 | `--out` 을 안 줌 | 출력 마지막 줄의 `report:` 경로 확인(기본 `~/.cache/llm-page-lint/runs/`) |
+| 캐시 폴더가 계속 쌓임 | `--out` 없이 실행할 때마다 새 폴더가 생김 | 필요 없으면 `~/.cache/llm-page-lint/runs/` 안을 지움. 실패·시간 초과한 실행은 폴더를 남기지 않음 |
+| `check fixtures` 가 종료 코드 3 | 폴더 안의 `hang.html` 은 일부러 멈추는 시험용 페이지 | 정상입니다. 개별 파일을 지정하거나 `--timeout` 을 짧게 |
 | `error: invalid viewport width "abc" ...`, `--timeout must be at least 1000 ms` (종료 코드 2) | 옵션 값이 잘못됨 | 메시지에 나온 값과 예시(`--viewports 375,1280`)를 확인 |
 | `detector returned N findings (limit 5000)` | 같은 요소가 아주 많이 반복되는 페이지 | `--ignore <선택자>` 로 반복 요소를 빼거나 페이지를 나눠 검사 |
 
