@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Hostile fixture: the page tampers with measurement functions</title>
+<style>
+  body { margin: 0; font: 16px/1.4 monospace; color: #111; background: #fff; }
+  #real { width: 20ch; height: 20px; overflow: hidden; margin: 24px; }
+  #forged { position: absolute; left: 3000px; top: 80px; margin: 0; }
+</style>
+<script>
+  // 1) Try to hide every element's geometry by zeroing getBoundingClientRect.
+  Element.prototype.getBoundingClientRect = function () {
+    return { x: 0, y: 0, left: 0, top: 0, right: 0, bottom: 0, width: 0, height: 0 };
+  };
+  // 2) Try to intercept pushes into result arrays.
+  Array.prototype.push = function () { return 0; };
+  // 3) Feed the detector a non-string section name, hoping a forged value reaches the report.
+  var realGetAttribute = Element.prototype.getAttribute;
+  Element.prototype.getAttribute = function (name) {
+    if (name === 'data-section') return { slice: function () { return { forged: true }; } };
+    return realGetAttribute.call(this, name);
+  };
+</script>
+</head>
+<body>
+<!-- the one genuine defect (outside any section element): text clipped by overflow hidden -->
+<div id="real">This text is much longer than its small fixed box so it is cut off.</div>
+<!-- a block inside data-section: the tampered attribute makes its finding unusable, so the parent rejects it -->
+<section data-section="x"><p id="forged">Far off to the right.</p></section>
+</body>
+</html>

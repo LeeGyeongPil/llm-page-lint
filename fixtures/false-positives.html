@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>False-positive controls: look like defects but are intentional</title>
+<style>
+  body { margin: 0; font: 16px/1.4 monospace; color: #111; background: #fff; }
+  section { padding: 24px; }
+  /* screen-reader-only text */
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  /* intentional single-line ellipsis */
+  .ellipsis { width: 20ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* intentional multi-line clamp */
+  .clamp { width: 30ch; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  /* white text on a dark gradient is fine */
+  #dark { height: 80px; background-image: linear-gradient(90deg, #0b1d3a, #1b3a6b); }
+  #dark p { color: #fff; font-size: 20px; margin: 0; }
+</style>
+</head>
+<body>
+<section data-section="sr">
+  <p>Visible text.</p>
+  <span class="sr-only">Skip to content</span>
+</section>
+<section data-section="ellipsis">
+  <div class="ellipsis">This title is much longer than its box and is shortened on purpose</div>
+</section>
+<section data-section="clamp">
+  <p class="clamp">This teaser is clamped to two lines on purpose. It has plenty more words that are hidden after the second line, which is the whole point of a line clamp.</p>
+</section>
+<section id="dark" data-section="dark">
+  <p>White headline on a dark gradient</p>
+</section>
+</body>
+</html>

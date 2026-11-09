@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Defect fixture: one example of each of the 8 defect kinds</title>
+<style>
+  /* Monospace + ch units keep line breaks stable across machines. */
+  body { margin: 0; font: 16px/1.4 monospace; color: #111; background: #fff; }
+  section { position: relative; padding: 24px; }
+  /* 1 orphan_punct: the "." after the inline-block chip does not fit and starts line 3 */
+  #s-orphan .col { width: 19ch; margin: 0; }
+  #s-orphan .chip { display: inline-block; }
+  /* 2 overlap_text: two absolutely positioned headings drawn on top of each other */
+  #s-overlap { height: 120px; }
+  #s-overlap h2 { position: absolute; top: 20px; left: 24px; margin: 0; font-size: 28px; }
+  #s-overlap h3 { position: absolute; top: 30px; left: 60px; margin: 0; font-size: 22px; }
+  /* 3 clipped_text: fixed height + overflow hidden cuts the last lines */
+  #s-clip .card { width: 30ch; height: 40px; overflow: hidden; }
+  /* 4 offscreen_text: placed beyond the right edge of the viewport */
+  #s-off .lost { position: absolute; left: 1100px; top: 10px; width: 300px; margin: 0; }
+  /* 5 empty_box: a visible decorated box with nothing inside */
+  #s-empty .box { width: 300px; height: 150px; background: #eef; border: 2px dashed #99c; }
+  /* 6 cut_image: the image is taller than the section that clips it */
+  #s-img { height: 100px; overflow: hidden; padding: 0; }
+  #s-img img { display: block; width: 200px; height: 180px; }
+  /* 7 low_contrast_over_image: white text on a very light gradient (control below is dark) */
+  #s-hero { height: 80px; background-image: linear-gradient(90deg, #e8e8e8, #f4f4f4); }
+  #s-hero p { color: #ffffff; font-size: 24px; margin: 0; }
+  #s-hero2 { height: 80px; background-image: linear-gradient(90deg, #111, #333); }
+  #s-hero2 p { color: #ffffff; font-size: 24px; margin: 0; }
+  /* control: screen-reader-only text must NOT be reported as off-screen */
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+</style>
+</head>
+<body>
+<section id="s-orphan" data-section="orphan">
+  <p class="col">Build pages in <span class="chip">minutes-with-ai-xyz</span>.</p>
+</section>
+<section id="s-overlap" data-section="overlap">
+  <h2>Overlapping heading</h2>
+  <h3>Subtitle drawn on top</h3>
+</section>
+<section id="s-clip" data-section="clip">
+  <div class="card">This card has far too much text for its fixed height, so the last lines are cut off by overflow hidden.</div>
+</section>
+<section id="s-off" data-section="offscreen">
+  <p>Visible text.</p>
+  <p class="lost">This sentence sits outside the viewport.</p>
+  <span class="sr-only">Screen reader only label</span>
+</section>
+<section id="s-empty" data-section="empty">
+  <div class="box"></div>
+</section>
+<section id="s-img" data-section="image">
+  <img alt="tall chart" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='180'><rect width='200' height='180' fill='%2336a'/></svg>">
+</section>
+<section id="s-hero" data-section="hero">
+  <p>White headline on a light photo</p>
+</section>
+<section id="s-hero2" data-section="hero2">
+  <p>White headline on a dark photo</p>
+</section>
+<section id="s-timer" data-section="timer">
+  <p>Offer ends in <span id="cd">10:00</span></p>
+  <script>
+    var s = 600;
+    setInterval(function () {
+      s--;
+      document.getElementById('cd').textContent = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+    }, 500);
+  </script>
+</section>
+</body>
+</html>

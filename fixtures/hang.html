@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Hang fixture: the page freezes after load</title></head>
+<body>
+<p>This page locks up its own script thread shortly after it loads.</p>
+<script>
+  setTimeout(function () { for (;;) {} }, 300);
+</script>
+</body>
+</html>

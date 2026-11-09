@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Refine demo: one fixable section, one section whose usual fix backfires, one good section</title>
+<style>
+  body { margin: 0; font: 16px/1.4 monospace; color: #111; background: #fff; }
+  section { position: relative; padding: 24px; }
+  /* clip: a fixed-height card cuts its own text; "height:auto" fixes it */
+  #s-clip .card { width: 30ch; height: 40px; overflow: hidden; }
+  /* overlap: two headings drawn on top of each other inside a fixed-height, clipping section.
+     The usual prescription (push the lower heading down) moves it out of the box and creates new clipped text. */
+  #s-overlap { height: 70px; padding: 0; overflow: hidden; }
+  #s-overlap h2 { position: absolute; top: 20px; left: 24px; margin: 0; font-size: 28px; }
+  #s-overlap h3 { position: absolute; top: 30px; left: 60px; margin: 0; font-size: 22px; }
+  /* good: nothing to fix */
+  #s-good p { margin: 0; }
+</style>
+</head>
+<body>
+<section id="s-clip" data-section="clip">
+  <div class="card">This card has far too much text for its fixed height, so the last lines are cut off by overflow hidden.</div>
+</section>
+<section id="s-overlap" data-section="overlap">
+  <h2>Overlapping heading</h2>
+  <h3>Subtitle drawn on top</h3>
+</section>
+<section id="s-good" data-section="good">
+  <p>This section is fine and must stay untouched.</p>
+</section>
+</body>
+</html>
