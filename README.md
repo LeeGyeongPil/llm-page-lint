@@ -93,7 +93,7 @@ report: /tmp/lint-out/report.html
 |---|---|---|
 | `check <입력...>` | 검사. 입력은 `.html` 파일·폴더·http(s) URL | `check page.html` |
 | `--viewports <목록>` | 화면 너비(px) 목록. 기본 375,768,1280 | `--viewports 375,1280` |
-| `--out <폴더>` | 보고서 저장 위치. 기본은 `~/.cache/llm-page-lint/runs/`(`$XDG_CACHE_HOME` 가 있으면 그 아래)이며 마지막 줄에 경로 출력 | `--out /tmp/lint-out` |
+| `--out <폴더>` | 보고서 저장 위치. 기본은 `~/.cache/llm-page-lint/runs/`(`$XDG_CACHE_HOME` 가 있으면 그 아래)이며 마지막 줄에 경로 출력(리눅스에서 `XDG_CACHE_HOME` 만 바꾸면 브라우저 위치도 바뀌므로 아래 설정 절 참고) | `--out /tmp/lint-out` |
 | `--json` | 요약 대신 JSON 보고서를 표준 출력으로 | `--json > r.json` |
 | `--fail-on <종류,...>` | 이 종류만 종료 코드 1 에 반영, 나머지는 경고 | `--fail-on clipped_text` |
 | `--ignore <선택자>` | 해당 요소(와 안쪽)는 검사 제외(여러 번 가능) | `--ignore .ad-slot` |
@@ -189,7 +189,7 @@ node examples/api.mjs
 | `screenshots` | `false` | 보고서용 스크린샷도 찍기 |
 
 ## 설정
-- 환경변수 `PLAYWRIGHT_BROWSERS_PATH` — Chromium 설치 위치. 기본은 Playwright 사용자 캐시(macOS `~/Library/Caches/ms-playwright`, 리눅스 `~/.cache/ms-playwright`)이며, 다른 곳에 설치했을 때만 지정합니다.
+- 환경변수 `PLAYWRIGHT_BROWSERS_PATH` — Chromium 설치 위치. 기본은 Playwright 사용자 캐시(macOS `~/Library/Caches/ms-playwright`, 리눅스 `~/.cache/ms-playwright`)이며, 다른 곳에 설치했을 때만 지정합니다. 리눅스에서는 Playwright 가 `$XDG_CACHE_HOME/ms-playwright` 를 보므로, 보고서 위치를 옮기려고 `XDG_CACHE_HOME` 을 바꿨다면 `PLAYWRIGHT_BROWSERS_PATH=~/.cache/ms-playwright` 도 함께 지정하거나 `--out` 을 쓰세요.
 - 환경변수 `LLM_PAGE_LINT_BROWSER_ARGS` — Chromium 에 줄 추가 플래그. 컨테이너 CI 에서는 `--no-sandbox`.
 - `LLM_PAGE_LINT_BASE_URL`·`LLM_PAGE_LINT_API_KEY`·`LLM_PAGE_LINT_JUDGE_MODEL`·`LLM_PAGE_LINT_FIXER_MODEL` — 다음 마일스톤의 `refine` 에서 모델 판정을 연결할 때만 쓰는 값입니다(`.env.example` 참고). `check` 는 모델도 키도 필요 없습니다.
 
@@ -249,6 +249,7 @@ axe-core 의 위반 3건은 페이지 구조(랜드마크·제목·영역) 규�
 | 증상 | 원인 | 해결 |
 |---|---|---|
 | `headless Chromium for Playwright is not installed` 오류(종료 코드 2) | Chromium 미설치 | `npx playwright install chromium --only-shell` |
+| 리눅스에서 `XDG_CACHE_HOME` 을 바꾼 뒤 `headless Chromium ... is not installed` (뒤에 `note: on Linux Playwright looks in $XDG_CACHE_HOME/ms-playwright` 안내가 붙음) | 리눅스의 Playwright 는 브라우저를 `$XDG_CACHE_HOME/ms-playwright` 에서 찾는데 Chromium 은 `~/.cache/ms-playwright` 에 설치됨 | `PLAYWRIGHT_BROWSERS_PATH=~/.cache/ms-playwright` 지정, 또는 `XDG_CACHE_HOME` 대신 `--out` 으로 보고서 위치 지정 |
 | 리눅스에서 브라우저가 바로 종료 | 시스템 라이브러리 부족 | `npx playwright install --with-deps chromium --only-shell` |
 | 컨테이너·CI 에서 SIGTRAP 으로 실패 | 샌드박스 권한 | `LLM_PAGE_LINT_BROWSER_ARGS=--no-sandbox` |
 | 종료 코드 3 | 페이지가 스크립트 루프에 빠졌거나 `--timeout` 이 너무 짧음 | 값을 늘리거나 페이지의 스크립트를 점검 |
@@ -261,7 +262,7 @@ axe-core 의 위반 3건은 페이지 구조(랜드마크·제목·영역) 규�
 
 ## 개발·기여
 ```bash
-npm test      # 빌드 후 25개 시험(키·모델 불필요)
+npm test      # 빌드 후 27개 시험(키·모델 불필요)
 ```
 버그·제안은 이슈로 남겨 주세요. 변경 기록은 [CHANGELOG.md](CHANGELOG.md).
 
