@@ -7,6 +7,16 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 ### Added
 - `refine`: section-level judge + fixer loop that keeps a patch only if deterministic measurement improves (experimental, undocumented; mock judge/fixer by default).
 
+## [0.1.1] - 2026-11-10
+
+### Fixed
+- `npm test` uses a glob (`node --test "test/*.test.mjs"`); passing a folder failed on Node 22/24.
+- CI matrix now runs Node 22, 24 and 26 on ubuntu-24.04.
+- Failed or timed-out runs no longer leave an empty `--out` / cache folder behind.
+
+### Docs
+- README: default report location, cache growth, `check fixtures` timing out on `hang.html`.
+
 ## [0.1.0] - 2026-11-10
 
 ### Added
