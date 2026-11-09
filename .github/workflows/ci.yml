@@ -1,6 +1,7 @@
 # 키·모델 없이 전체 시험(헤드리스 Chromium 포함)을 돌린다.
 # package.json 의 engines(node >=22)가 약속하는 가장 낮은 버전부터 최신까지 모두 돌려,
 # 한 버전에서만 되는 기능(예: node --test 에 폴더를 넘기는 것)을 놓치지 않는다.
+# 진단 단계(버전·브라우저 위치·글꼴)는 실패했을 때 원인을 로그에서 바로 보이게 하려고 둔다.
 name: ci
 on:
   push:
@@ -23,10 +24,36 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           cache: npm
-      - run: node --version && npm --version
+      - name: Show runtime
+        run: |
+          node --version
+          npm --version
+          grep PRETTY_NAME /etc/os-release
+          echo "cpus=$(nproc)"
+          free -m
+          echo "XDG_CACHE_HOME=${XDG_CACHE_HOME:-<unset>} PLAYWRIGHT_BROWSERS_PATH=${PLAYWRIGHT_BROWSERS_PATH:-<unset>}"
       - run: npm ci
       # 레포와 같은 Playwright(1.65.0)로 헤드리스 셸만 설치하고, --with-deps 로 리눅스 시스템 라이브러리·글꼴도 함께 깐다.
       - run: npx playwright install --with-deps chromium --only-shell
+      - name: Show browser and fonts
+        run: |
+          npx playwright --version
+          npx playwright install --dry-run --only-shell chromium
+          echo "monospace -> $(fc-match monospace)"
+          echo "sans-serif -> $(fc-match sans-serif)"
+          fc-list : family | sort -u > "$RUNNER_TEMP/fonts.txt"
+          echo "$(wc -l < "$RUNNER_TEMP/fonts.txt") font families, first 20:"
+          head -n 20 "$RUNNER_TEMP/fonts.txt"
       - run: npm test
         env:
           LLM_PAGE_LINT_BROWSER_ARGS: "--no-sandbox"
+      # 시험이 깨졌을 때만: 픽스처를 CLI 로 직접 재서 리눅스에서 무엇이 다르게 측정됐는지 남긴다(보고서는 러너 임시 폴더에).
+      - name: Diagnose on failure
+        if: failure()
+        env:
+          LLM_PAGE_LINT_BROWSER_ARGS: "--no-sandbox"
+          LLM_PAGE_LINT_DEBUG: "1"
+        run: |
+          node dist/cli.js check fixtures/defects.html --viewports 1024 --out "$RUNNER_TEMP/diag-defects" || echo "exit=$?"
+          node dist/cli.js check fixtures/clean.html fixtures/false-positives.html --viewports 1024 --out "$RUNNER_TEMP/diag-clean" || echo "exit=$?"
+          node dist/cli.js check fixtures/hang.html --timeout 2000 --out "$RUNNER_TEMP/diag-hang" || echo "exit=$?"
