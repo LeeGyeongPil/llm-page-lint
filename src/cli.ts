@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { InputError, LintTimeoutError } from './errors.js';
 import { VERSION, lintDetailed } from './lint.js';
-import { prepareOutDir } from './output.js';
+import { resolveOutDir, writeOutFiles } from './output.js';
 import { configFromEnv, OpenAIFixer, OpenAIJudge } from './refine/openai.js';
 import { refine } from './refine/loop.js';
 import { reportToHtml } from './report/html.js';
@@ -144,7 +144,7 @@ async function runRefine(args: string[]): Promise<number> {
   };
   const judgeKind = kind('judge', values.judge);
   const fixerKind = kind('fixer', values.fixer);
-  const outDir = prepareOutDir([file], values.out);
+  const outDir = resolveOutDir([file], values.out);
   const report = await refine(file, {
     judge: judgeKind === 'openai' ? new OpenAIJudge(configFromEnv('judge')) : undefined,
     fixer: fixerKind === 'openai' ? new OpenAIFixer(configFromEnv('fixer')) : undefined,
@@ -155,8 +155,7 @@ async function runRefine(args: string[]): Promise<number> {
     log: (l) => console.error(l),
   });
   const { refinedHtml, ...meta } = report;
-  writeFileSync(join(outDir, 'refine.json'), JSON.stringify(meta, null, 2) + '\n');
-  writeFileSync(join(outDir, 'refined.html'), refinedHtml);
+  writeOutFiles(outDir, { 'refine.json': JSON.stringify(meta, null, 2) + '\n', 'refined.html': refinedHtml });
   if (values.write) writeFileSync(resolve(file), refinedHtml);
 
   console.log(report.mode.mock ? `[${report.mode.note}]` : `[${report.mode.note}] (experimental)`);
@@ -214,7 +213,8 @@ async function runCheck(args: string[], demo: boolean): Promise<number> {
     if (timeoutMs < 1000) throw new InputError(`--timeout must be at least 1000 ms, got "${values.timeout}"`);
   }
 
-  const outDir = prepareOutDir(
+  // 경로만 정하고(--out 이 파일이면 여기서 오류), 폴더는 실행이 성공한 뒤에 만든다.
+  const outDir = resolveOutDir(
     inputs.map((i) => ('file' in i ? i.file : 'url' in i ? i.url : 'page')),
     values.out,
   );
@@ -225,8 +225,7 @@ async function runCheck(args: string[], demo: boolean): Promise<number> {
     changingText: !values['no-changing-text'],
     screenshots: true,
   });
-  writeFileSync(join(outDir, 'report.json'), reportToJson(report));
-  writeFileSync(join(outDir, 'report.html'), reportToHtml(report, shots));
+  writeOutFiles(outDir, { 'report.json': reportToJson(report), 'report.html': reportToHtml(report, shots) });
 
   const failing = failOn ? report.findings.filter((f) => failOn.has(f.kind)) : report.findings;
   if (values.json) {

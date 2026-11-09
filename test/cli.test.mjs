@@ -88,4 +88,13 @@ test('usage and input errors exit 2 with a fix hint', () => {
   assert.equal(runCli(['--version']).status, 0);
   assert.equal(runCli(['bogus']).status, 2);
   assert.ok(!existsSync(join(tmp('y'), 'report.json')));
+
+  // a run that fails (here: viewport out of range, checked inside lint) leaves no empty folder behind
+  const cache = tmp('failcache');
+  const out = join(tmp('failout'), 'never');
+  assert.equal(runCli(['check', fixture('clean.html'), '--viewports', '5'], { XDG_CACHE_HOME: cache }).status, 2);
+  assert.equal(runCli(['check', fixture('clean.html'), '--viewports', '5', '--out', out]).status, 2);
+  assert.equal(runCli(['refine', fixture('refine-demo.html'), '--min-gain', '-1'], { XDG_CACHE_HOME: cache }).status, 2);
+  assert.deepEqual(readdirSync(cache), [], 'no run folder for failed runs');
+  assert.ok(!existsSync(out), '--out folder is not created for a failed run');
 });

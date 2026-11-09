@@ -4,7 +4,7 @@
 // Nothing is written next to the input or into the current folder unless `--out` is given.
 // Input files are never modified.
 
-import { existsSync, mkdirSync, statSync } from 'node:fs';
+import { existsSync, mkdirSync, statSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { basename, join, resolve } from 'node:path';
 import { InputError } from './errors.js';
@@ -21,13 +21,15 @@ function safeName(name: string): string {
 }
 
 /**
- * Create and return the output directory for one run.
+ * Decide (but do not create) the output directory for one run.
+ * The folder is created only by writeOutFiles(), after the run succeeded — a run that fails on
+ * bad options, a missing browser or a timeout leaves no empty folder behind in the cache.
  *
  * @param inputs human-readable input names (used for the default folder name)
  * @param out    explicit `--out` folder, or undefined for the XDG cache default
  * @throws InputError when `out` exists but is a file
  */
-export function prepareOutDir(inputs: string[], out?: string, env: NodeJS.ProcessEnv = process.env): string {
+export function resolveOutDir(inputs: string[], out?: string, env: NodeJS.ProcessEnv = process.env): string {
   let dir: string;
   if (out !== undefined) {
     dir = resolve(out);
@@ -39,6 +41,11 @@ export function prepareOutDir(inputs: string[], out?: string, env: NodeJS.Proces
     const name = inputs.length === 1 ? safeName(inputs[0]) : `${inputs.length}-pages`;
     dir = join(cacheRoot(env), `${stamp}-${name}`);
   }
-  mkdirSync(dir, { recursive: true });
   return dir;
+}
+
+/** Create the output folder (if needed) and write the given files into it. */
+export function writeOutFiles(dir: string, files: Record<string, string>): void {
+  mkdirSync(dir, { recursive: true }); // 실행이 끝난 뒤에만 폴더를 만든다
+  for (const [name, content] of Object.entries(files)) writeFileSync(join(dir, name), content);
 }
