@@ -1,4 +1,6 @@
 # 키·모델 없이 전체 시험(헤드리스 Chromium 포함)을 돌린다.
+# package.json 의 engines(node >=22)가 약속하는 가장 낮은 버전부터 최신까지 모두 돌려,
+# 한 버전에서만 되는 기능(예: node --test 에 폴더를 넘기는 것)을 놓치지 않는다.
 name: ci
 on:
   push:
@@ -8,14 +10,22 @@ on:
   workflow_dispatch:
 jobs:
   test:
-    runs-on: ubuntu-latest
+    # ubuntu-latest 는 때때로 새 배포판으로 바뀐다 — 측정 결과가 글꼴·시스템 라이브러리에 기대므로 고정한다.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 24, 26]
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: lts/*
+          node-version: ${{ matrix.node }}
           cache: npm
+      - run: node --version && npm --version
       - run: npm ci
+      # 레포와 같은 Playwright(1.65.0)로 헤드리스 셸만 설치하고, --with-deps 로 리눅스 시스템 라이브러리·글꼴도 함께 깐다.
       - run: npx playwright install --with-deps chromium --only-shell
       - run: npm test
         env:
