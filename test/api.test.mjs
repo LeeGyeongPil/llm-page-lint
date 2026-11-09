@@ -33,6 +33,18 @@ test('detectPage works on a page the caller opened', async () => {
   }
 });
 
+test('BrowserMissingError explains the Linux XDG_CACHE_HOME trap', () => {
+  const linux = new api.BrowserMissingError(undefined, { XDG_CACHE_HOME: '/tmp/xdg' }, 'linux');
+  assert.match(linux.message, /npx playwright install chromium --only-shell/);
+  assert.match(linux.message, /\/tmp\/xdg\/ms-playwright/);
+  assert.match(linux.message, /PLAYWRIGHT_BROWSERS_PATH=~\/\.cache\/ms-playwright/);
+  // no note where XDG_CACHE_HOME plays no part
+  assert.doesNotMatch(new api.BrowserMissingError(undefined, { XDG_CACHE_HOME: '/tmp/xdg' }, 'darwin').message, /note:/);
+  assert.doesNotMatch(new api.BrowserMissingError(undefined, { XDG_CACHE_HOME: '/x', PLAYWRIGHT_BROWSERS_PATH: '/pw' }, 'linux').message, /note:/);
+  assert.doesNotMatch(new api.BrowserMissingError(undefined, {}, 'linux').message, /note:/);
+  assert.equal(new api.BrowserMissingError().exitCode, 2);
+});
+
 test('invalid input raises InputError with a hint', async () => {
   await assert.rejects(api.lint({ file: '/nonexistent/page.html' }), api.InputError);
   await assert.rejects(api.lint({ html: '<p>x</p>' }, { viewports: [10] }), /viewport/);

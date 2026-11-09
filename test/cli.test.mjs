@@ -1,10 +1,33 @@
 // AC-5, AC-6, AC-9 (demo) and error paths.
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { test } from 'node:test';
-import { fixture, runCli, tmp } from './helpers.mjs';
+import { ROOT, fixture, playwrightBrowsersPath, runCli, tmp } from './helpers.mjs';
 import { LintTimeoutError, lint } from '../dist/index.js';
+
+// Regression (CI on Linux): runCli moves XDG_CACHE_HOME to a temp folder, and on Linux Playwright looks for
+// browsers under $XDG_CACHE_HOME/ms-playwright — every CLI run then said "Chromium is not installed" (exit 2).
+test('CLI tests see the same Playwright browser folder as an install', () => {
+  // the helper's path must be exactly where `playwright install` puts the headless shell in this environment
+  const dry = spawnSync(process.execPath, [join(ROOT, 'node_modules', 'playwright', 'cli.js'), 'install', '--dry-run', '--only-shell', 'chromium'], {
+    encoding: 'utf8',
+    timeout: 60_000,
+  });
+  assert.equal(dry.status, 0, dry.stderr);
+  const location = /Install location:\s+(\S.*)/.exec(dry.stdout);
+  assert.ok(location, dry.stdout);
+  assert.equal(playwrightBrowsersPath(), dirname(location[1].trim()));
+
+  // the Linux rule the helper copies (it cannot be observed on macOS/Windows, so it is pinned here)
+  assert.equal(playwrightBrowsersPath({ XDG_CACHE_HOME: '/x' }, 'linux'), join('/x', 'ms-playwright'));
+  assert.equal(playwrightBrowsersPath({ PLAYWRIGHT_BROWSERS_PATH: '/pw', XDG_CACHE_HOME: '/x' }, 'linux'), '/pw');
+
+  // and a CLI run with a moved XDG cache still finds Chromium
+  const r = runCli(['check', fixture('clean.html'), '--viewports', '1024', '--out', tmp('xdgbrowser')], { XDG_CACHE_HOME: tmp('xdgmoved') });
+  assert.equal(r.status, 0, r.stderr);
+});
 
 test('timeout exits with code 3 and closes the browser', async () => {
   const started = Date.now();
