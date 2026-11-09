@@ -1,0 +1,22 @@
+# 키·모델 없이 전체 시험(헤드리스 Chromium 포함)을 돌린다.
+name: ci
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "17 3 * * 1"   # 매주 월요일 — 의존성·런타임이 바뀌어 깨지지 않았는지 정기 확인
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium --only-shell
+      - run: npm test
+        env:
+          LLM_PAGE_LINT_BROWSER_ARGS: "--no-sandbox"
