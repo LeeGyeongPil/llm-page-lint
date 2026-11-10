@@ -50,3 +50,36 @@ test('invalid input raises InputError with a hint', async () => {
   await assert.rejects(api.lint({ html: '<p>x</p>' }, { viewports: [10] }), /viewport/);
   await assert.rejects(api.lint({ url: 'ftp://x' }, { viewports: [1024] }), api.InputError);
 });
+
+test('lint() rejects an invalid ignore selector with InputError, never opens the input page, and closes the browser', async () => {
+  let browser;
+  let opened = 0;
+  await assert.rejects(
+    api.lint({ file: fixture('defects.html') }, {
+      viewports: [1024],
+      ignore: ['.ok', '[[bad'],
+      onBrowser: (b) => {
+        browser = b;
+        // count navigations: the invalid selector must be rejected before any input page is loaded
+        const newContext = b.newContext.bind(b);
+        b.newContext = async (...a) => {
+          const ctx = await newContext(...a);
+          const newPage = ctx.newPage.bind(ctx);
+          ctx.newPage = async (...x) => {
+            const page = await newPage(...x);
+            for (const m of ['goto', 'setContent']) {
+              const orig = page[m].bind(page);
+              page[m] = (...y) => (opened++, orig(...y));
+            }
+            return page;
+          };
+          return ctx;
+        };
+      },
+    }),
+    (e) => e instanceof api.InputError && e.message.includes('"[[bad"'),
+  );
+  assert.ok(browser, 'browser was launched');
+  assert.equal(browser.isConnected(), false);
+  assert.equal(opened, 0);
+});

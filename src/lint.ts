@@ -95,6 +95,25 @@ export async function lintDetailed(inputs: LintInput[], opts: LintOptions = {}):
     let rejected = 0;
     const ctx = await newContext(browser);
     const keepPagesOpen = isRestricted(browser);
+    // Node has no CSS parser, so check --ignore selectors in the browser on a blank page, before any input page is opened.
+    if (opts.ignore?.length) {
+      const blank = await ctx.newPage();
+      try {
+        const bad = await blank.evaluate((list) => {
+          for (const s of list) {
+            try {
+              document.createDocumentFragment().querySelector(s);
+            } catch {
+              return s;
+            }
+          }
+          return undefined;
+        }, opts.ignore);
+        if (bad !== undefined) throw new InputError(`invalid CSS selector "${bad}" in --ignore: use a selector such as --ignore '.ad-slot'`);
+      } finally {
+        if (!keepPagesOpen) await blank.close().catch(() => undefined);
+      }
+    }
     for (const input of inputs) {
       for (let vi = 0; vi < viewports.length; vi++) {
         const width = viewports[vi];

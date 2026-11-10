@@ -121,3 +121,13 @@ test('usage and input errors exit 2 with a fix hint', () => {
   assert.deepEqual(readdirSync(cache), [], 'no run folder for failed runs');
   assert.ok(!existsSync(out), '--out folder is not created for a failed run');
 });
+
+// Regression: an invalid --ignore selector used to reach the page and print a Playwright stack trace.
+test('invalid --ignore selector is a one-line usage error (exit 2), valid ones still work', () => {
+  const bad = runCli(['check', fixture('defects.html'), '--viewports', '1024', '--ignore', '[[bad', '--out', tmp('badsel')]);
+  assert.equal(bad.status, 2);
+  assert.equal(bad.stderr.trim(), `error: invalid CSS selector "[[bad" in --ignore: use a selector such as --ignore '.ad-slot'`);
+  const ok = runCli(['check', fixture('defects.html'), '--viewports', '1024', '--ignore', '.ad-slot', '--ignore', '#nothing', '--json', '--out', tmp('oksel')]);
+  assert.ok(ok.status === 0 || ok.status === 1, ok.stderr);
+  assert.equal(JSON.parse(ok.stdout).findings.length, 8);
+});
