@@ -97,7 +97,7 @@ report: /tmp/lint-out/report.html
 | `--json` | 요약 대신 JSON 보고서를 표준 출력으로 | `--json > r.json` |
 | `--fail-on <종류,...>` | 이 종류만 종료 코드 1 에 반영, 나머지는 경고 | `--fail-on clipped_text` |
 | `--ignore <선택자>` | 해당 요소(와 안쪽)는 검사 제외(여러 번 가능) | `--ignore .ad-slot` |
-| `--timeout <ms>` | 전체 시간 상한(기본 60000). 넘으면 종료 코드 3 | `--timeout 2000` |
+| `--timeout <ms>` | 전체 시간 상한(기본 60000, 허용 범위 1000~2147483647 — 범위 밖은 종료 코드 2). 실행이 이 시간을 초과하면 종료 코드 3 | `--timeout 2000` |
 | `--no-changing-text` | 1.2초 간격으로 두 번 읽는 "바뀌는 글자" 검사 생략 | |
 | `demo` | 내장 샘플 검사(항상 종료 코드 0) | `npm start` |
 
@@ -183,7 +183,7 @@ node examples/api.mjs
 | 필드 | 기본값 | 뜻 |
 |---|---|---|
 | `viewports` | `[375, 768, 1280]` | 화면 너비 목록(px) |
-| `timeoutMs` | `60000` | 전체 시간 상한 |
+| `timeoutMs` | `60000` | 전체 시간 상한(허용 범위 1000~2147483647, 밖이면 `InputError`) |
 | `changingText` | `true` | 바뀌는 글자 검사 |
 | `ignore` | 없음 | 검사에서 뺄 CSS 선택자 목록 |
 | `screenshots` | `false` | 보고서용 스크린샷도 찍기 |
@@ -243,13 +243,14 @@ flowchart LR
 | 보고서를 못 찾겠음 | `--out` 을 안 줌 | 출력 마지막 줄의 `report:` 경로 확인(기본 `~/.cache/llm-page-lint/runs/`) |
 | 캐시 폴더가 계속 쌓임 | `--out` 없이 실행할 때마다 새 폴더가 생김 | 필요 없으면 `~/.cache/llm-page-lint/runs/` 안을 지움. 실패·시간 초과한 실행은 폴더를 남기지 않음 |
 | `check fixtures` 가 종료 코드 3 | 폴더 안의 `hang.html` 은 일부러 멈추는 시험용 페이지 | 정상입니다. 개별 파일을 지정하거나 `--timeout` 을 짧게 |
-| `error: invalid viewport width "abc" ...`, `--timeout must be at least 1000 ms` (종료 코드 2) | 옵션 값이 잘못됨 | 메시지에 나온 값과 예시(`--viewports 375,1280`)를 확인 |
+| `error: invalid viewport width "abc" ...`, `--timeout must be between 1000 and 2147483647 ms`, `--timeout must be a number of milliseconds, got "abc"` (종료 코드 2) | 옵션 값이 잘못됨(숫자가 아니거나 범위 밖) | 메시지에 나온 값과 예시(`--viewports 375,1280`, `--timeout 5000`)를 확인 |
+| `--timeout 3000000000` 이 종료 코드 2 | `--timeout` 상한은 2147483647 ms(약 24.8일)입니다. 넘는 값은 조용히 바꾸지 않고 거부합니다 | 1000~2147483647 사이 값을 쓰세요 |
 | `detector returned N findings (limit 5000)` | 같은 요소가 아주 많이 반복되는 페이지 | `--ignore <선택자>` 로 반복 요소를 빼거나 페이지를 나눠 검사 |
 | `error: invalid CSS selector "[[bad" in --ignore: use a selector such as --ignore '.ad-slot'` (종료 코드 2) | `--ignore` 에 문법이 틀린 선택자를 줌 | `.ad-slot`, `#id` 같은 올바른 CSS 선택자로 고침 |
 
 ## 개발·기여
 ```bash
-npm test      # 빌드 후 27개 시험(키·모델 불필요)
+npm test      # 빌드 후 31개 시험(키·모델 불필요)
 ```
 버그·제안은 이슈로 남겨 주세요. 변경 기록은 [CHANGELOG.md](CHANGELOG.md).
 
