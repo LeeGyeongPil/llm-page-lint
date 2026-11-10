@@ -2,6 +2,15 @@
 
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.5] - 2026-11-11
+
+### Fixed
+- `--timeout` / `lint({ timeoutMs })` above 2147483647 ms (the largest delay `setTimeout` accepts) is now rejected with an `InputError` (exit code 2, allowed range 1000 to 2147483647) instead of silently firing after 1 ms with a `TimeoutOverflowWarning` and a bogus "timed out" (exit code 3).
+
+### Known limitations
+- The new tests check the error text with a loose pattern, so a wording change may not fail them.
+- The upper bound 2147483647 is defined in both the CLI and the library; a single shared constant is a follow-up.
+
 ## [0.1.4] - 2026-11-11
 
 ### Fixed
