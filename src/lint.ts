@@ -10,6 +10,8 @@ import type { Finding, LintInput, LintOptions, LintReport, PageResult, PageShot 
 
 export const DEFAULT_VIEWPORTS = [375, 768, 1280];
 export const DEFAULT_TIMEOUT_MS = 60_000;
+/** Largest delay setTimeout accepts (2^31 - 1 ms, about 24.8 days); above it Node fires after 1 ms. */
+const MAX_TIMEOUT_MS = 2_147_483_647;
 const MAX_SHOT_HEIGHT = 12_000;
 
 /** Package version, read once from package.json (works from dist/ and from a checkout). */
@@ -73,7 +75,9 @@ export async function lintDetailed(inputs: LintInput[], opts: LintOptions = {}):
   }
   const viewports = normalizeViewports(opts.viewports);
   const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-  if (!Number.isFinite(timeoutMs) || timeoutMs < 1000) throw new InputError(`timeoutMs must be at least 1000 (CLI: --timeout <ms>), got ${String(timeoutMs)}`);
+  if (!Number.isFinite(timeoutMs) || timeoutMs < 1000 || timeoutMs > MAX_TIMEOUT_MS) {
+    throw new InputError(`timeoutMs must be between 1000 and ${MAX_TIMEOUT_MS} ms (CLI: --timeout <ms>), got ${String(timeoutMs)}`);
+  }
   const started = Date.now();
 
   let browser: Browser | undefined;

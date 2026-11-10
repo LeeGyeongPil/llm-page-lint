@@ -210,7 +210,7 @@ async function runCheck(args: string[], demo: boolean): Promise<number> {
   if (values.timeout !== undefined) {
     timeoutMs = Number(values.timeout);
     if (!Number.isFinite(timeoutMs)) throw new InputError(`--timeout must be a number of milliseconds, got "${values.timeout}"`);
-    if (timeoutMs < 1000) throw new InputError(`--timeout must be at least 1000 ms, got "${values.timeout}"`);
+    if (timeoutMs < 1000 || timeoutMs > 2147483647) throw new InputError(`--timeout must be between 1000 and 2147483647 ms, got "${values.timeout}"`);
   }
 
   // 경로만 정하고(--out 이 파일이면 여기서 오류), 폴더는 실행이 성공한 뒤에 만든다.
