@@ -245,6 +245,7 @@ flowchart LR
 | `check fixtures` 가 종료 코드 3 | 폴더 안의 `hang.html` 은 일부러 멈추는 시험용 페이지 | 정상입니다. 개별 파일을 지정하거나 `--timeout` 을 짧게 |
 | `error: invalid viewport width "abc" ...`, `--timeout must be at least 1000 ms` (종료 코드 2) | 옵션 값이 잘못됨 | 메시지에 나온 값과 예시(`--viewports 375,1280`)를 확인 |
 | `detector returned N findings (limit 5000)` | 같은 요소가 아주 많이 반복되는 페이지 | `--ignore <선택자>` 로 반복 요소를 빼거나 페이지를 나눠 검사 |
+| `error: invalid CSS selector "[[bad" in --ignore: use a selector such as --ignore '.ad-slot'` (종료 코드 2) | `--ignore` 에 문법이 틀린 선택자를 줌 | `.ad-slot`, `#id` 같은 올바른 CSS 선택자로 고침 |
 
 ## 개발·기여
 ```bash
