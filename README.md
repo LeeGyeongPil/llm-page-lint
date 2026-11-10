@@ -226,24 +226,10 @@ flowchart LR
 - 대비는 글자 영역의 픽셀 표본(하위 10% 분위)으로 추정한 값이라 경계에 가까운 값은 사람이 한 번 더 보는 편이 좋습니다.
 - 접근성 전반(구조·ARIA·키보드)은 다루지 않습니다. 그런 검사는 axe-core 같은 도구와 함께 쓰세요.
 
-## 다른 도구와 비교
-| | llm-page-lint | axe-core | 스크린샷 비교(시각 회귀) |
-|---|---|---|---|
-| 기준 이미지 | 필요 없음 | 필요 없음 | 필요함 |
-| 잡는 것 | 겹침·잘림·화면 밖·빈 상자·잘린 이미지·이미지 위 저대비·바뀌는 글자 | 접근성 규칙(구조·ARIA·대비 등) | 이전과 달라진 모든 픽셀 |
-| 새로 생성한 페이지에 | 바로 사용 | 사용 가능 | 비교할 이전 버전이 없음 |
-| 접근성 전반 | 다루지 않음 | 더 낫다 | 해당 없음 |
-
-같은 샘플 페이지로 비교해 봤습니다(`npm run compare:axe`, axe-core 4.14.0).
-```
-axe-core: 3 violations, 1 incomplete (needs manual review)
-  violation landmark-one-main
-  violation page-has-heading-one
-  violation region
-  incomplete color-contrast
-llm-page-lint: 8 findings
-```
-axe-core 의 위반 3건은 페이지 구조(랜드마크·제목·영역) 규칙이고, 이 샘플의 결함 8종은 위반으로 잡지 못했으며 대비는 "수동 확인 필요"로 남았습니다. 서로 목적이 달라 함께 쓰는 것이 좋습니다. 접근성 검사는 axe-core 가 훨씬 폭넓습니다.
+## 언제 쓰나
+- 기준 스크린샷 없이 새로 생성한 HTML 의 겹침·잘림 같은 레이아웃 결함을 CI 에서 종료 코드로 거르고 싶을 때 맞습니다.
+- 접근성 전반을 검사할 때는 [axe-core](https://github.com/dequelabs/axe-core) 를 보세요.
+- 이전 버전과의 픽셀 차이를 확인할 때는 시각 회귀 도구(예: [Playwright 스크린샷 비교](https://playwright.dev/docs/test-snapshots))를 보세요.
 
 ## 자주 겪는 문제
 | 증상 | 원인 | 해결 |

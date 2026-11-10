@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.3] - 2026-11-10
+
+### Changed
+- README: replaced the tool comparison table with a short "when to use" section.
+
 ## [0.1.2] - 2026-11-10
 
 ### Fixed
