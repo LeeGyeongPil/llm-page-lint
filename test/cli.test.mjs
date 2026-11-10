@@ -131,3 +131,16 @@ test('invalid --ignore selector is a one-line usage error (exit 2), valid ones s
   assert.ok(ok.status === 0 || ok.status === 1, ok.stderr);
   assert.equal(JSON.parse(ok.stdout).findings.length, 8);
 });
+
+test('--timeout above 2147483647 is a usage error (exit 2) without an overflow warning; the boundary values behave', () => {
+  const big = runCli(['check', fixture('clean.html'), '--viewports', '1024', '--timeout', '3000000000', '--out', tmp('tobig')]);
+  assert.equal(big.status, 2, big.stderr);
+  assert.match(big.stderr, /1000/);
+  assert.match(big.stderr, /2147483647/);
+  assert.doesNotMatch(big.stderr, /TimeoutOverflowWarning/);
+  const low = runCli(['check', fixture('clean.html'), '--viewports', '1024', '--timeout', '999', '--out', tmp('tolow')]);
+  assert.equal(low.status, 2, low.stderr);
+  const max = runCli(['check', fixture('clean.html'), '--viewports', '1024', '--timeout', '2147483647', '--out', tmp('tomax')]);
+  assert.equal(max.status, 0, max.stderr);
+  assert.doesNotMatch(max.stderr, /TimeoutOverflowWarning/);
+});

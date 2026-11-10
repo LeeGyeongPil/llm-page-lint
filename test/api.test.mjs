@@ -83,3 +83,19 @@ test('lint() rejects an invalid ignore selector with InputError, never opens the
   assert.equal(browser.isConnected(), false);
   assert.equal(opened, 0);
 });
+
+test('lint() rejects timeoutMs above the setTimeout limit with InputError and no overflow warning', async () => {
+  const warnings = [];
+  const onWarning = (w) => warnings.push(w.name);
+  process.on('warning', onWarning);
+  try {
+    await assert.rejects(
+      api.lint([{ file: fixture('clean.html') }], { viewports: [1024], timeoutMs: 3e9 }),
+      (e) => e instanceof api.InputError && /1000/.test(e.message) && /2147483647/.test(e.message) && !(e instanceof api.LintTimeoutError),
+    );
+    await new Promise((r) => setTimeout(r, 50));
+  } finally {
+    process.off('warning', onWarning);
+  }
+  assert.deepEqual(warnings.filter((n) => n === 'TimeoutOverflowWarning'), []);
+});
