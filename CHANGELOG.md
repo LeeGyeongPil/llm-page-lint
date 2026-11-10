@@ -2,6 +2,15 @@
 
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.4] - 2026-11-11
+
+### Fixed
+- An invalid CSS selector in `--ignore` (or `lint({ ignore })`) is now rejected with a one-line `InputError` (exit code 2) before any input page is opened, instead of a Playwright stack trace.
+
+### Known limitations
+- The error message names the CLI option (`--ignore`) even when the check is triggered through the library call `lint({ ignore })`.
+- `detectPage(page, { ignore })` does not pre-validate selectors; an invalid selector there still surfaces the browser's `SyntaxError`.
+
 ## [0.1.3] - 2026-11-10
 
 ### Changed
