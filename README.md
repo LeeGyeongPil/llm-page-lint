@@ -1,5 +1,7 @@
 # llm-page-lint
 
+**한국어** | [English](README.en.md)
+
 > **English summary** — A command-line linter that opens an LLM-generated HTML page in headless Chromium and measures 8 kinds of visual defects (overlapping, clipped or off-screen text, empty boxes, cut images, low contrast over images, orphan punctuation, self-changing text) without any reference image. Use it as a CI gate for AI-generated pages: exit code 1 means defects were found. Run: `git clone https://github.com/LeeGyeongPil/llm-page-lint && cd llm-page-lint && npm ci && npx playwright install chromium --only-shell && npm run build && npm start`. Findings are re-validated in the parent process, and a hard `--timeout` kills the browser so unattended runs cannot hang. A judge-and-fix loop is planned for a later milestone.
 
 LLM 이 만든 HTML 페이지를 헤드리스 브라우저로 열어서, 눈으로 봐야 알던 레이아웃 결함을 **숫자로 재고** 통과·실패(종료 코드)로 알려 주는 검사기입니다.
