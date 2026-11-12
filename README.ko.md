@@ -6,7 +6,7 @@ LLM 이 만든 HTML 페이지를 헤드리스 브라우저로 열어서, 눈으�
 
 인쇄 전 교정지를 떠올리면 쉽습니다. 교정자는 정답 원고 없이도 글자가 겹친 곳, 잘린 곳, 줄 끝에 마침표만 남은 곳에 빨간 펜으로 동그라미를 칩니다. 이 도구는 같은 일을 브라우저에서 규칙과 숫자로 하고, 사람이 매번 화면을 훑어보는 수고를 덜어 줍니다.
 
-![검사 결과 터미널 출력](docs/images/01-check-defects.png)
+![검사 결과 터미널 출력](docs/images/01-check-defects.ko.png)
 *결함 8종이 하나씩 들어 있는 샘플 페이지를 검사한 결과. 종류별 개수와 위치가 나오고, 결함이 있으니 종료 코드는 1입니다.*
 
 ## 이런 분께
@@ -33,16 +33,18 @@ npm start
 ```
 내장된 샘플 페이지(`fixtures/defects.html`)를 검사해 결함 표와 보고서 경로를 보여 줍니다. 이 명령은 항상 종료 코드 0 으로 끝나는 체험용입니다(실제 `check` 는 결함이 있으면 1).
 
+출력 언어는 로케일(`LANG`)을 따르며, `--lang en|ko` 로 바꿀 수 있습니다. 예: `npm start -- --lang en`.
+
 내 페이지를 검사하려면:
 ```bash
-node dist/cli.js check fixtures/defects.html --viewports 1024 --out /tmp/lint-out
+node dist/cli.js check fixtures/defects.html --viewports 1024 --lang ko --out /tmp/lint-out
 echo $?        # 1 = 결함 있음
 ```
-실제 출력은 다음과 같습니다(위 스크린샷과 같은 내용).
+실제 출력은 다음과 같습니다(위 스크린샷과 같은 내용). 이 문서의 출력은 `--lang ko` 로 얻은 한국어 화면이며, 영어 화면은 [English README](README.md) 를 보세요.
 ```
-checked 1 page render(s) at 1024px in 1.65s
+페이지 렌더 1개를 1024px 너비로 1.66초 동안 검사했습니다
 
-kind                      count
+종류                       개수
 ------------------------  -----
 orphan_punct                  1
 overlap_text                  1
@@ -62,14 +64,14 @@ changing_text                 1
 - low_contrast_over_image @1024px #s-hero > p [hero] ratio=1.17 need=3 color=rgb(255, 255, 255)
 - changing_text @1024px #s-timer > p [timer] before=Offer ends in 10:00 after=Offer ends in 9:58 intervalMs=1200
 
-8 findings
-report: /tmp/lint-out/report.html
+결함 8개
+보고서: /tmp/lint-out/report.html
 ```
 각 줄은 `결함 종류 @뷰포트 너비 · CSS 선택자 · 섹션 이름 · 측정값` 입니다. 예를 들어 `ratio=1.17 need=3` 은 글자와 배경의 명암비가 1.17 인데 최소 3 이 필요하다는 뜻입니다.
 
-`report:` 줄은 절대 경로로 나옵니다(위 `/tmp/lint-out` 은 예시). 같은 폴더에 `report.json`(기계용)과 `report.html`(사람용, 스크린샷 내장·외부 주소 없음)이 생깁니다. `report.html` 은 파일을 더블클릭하면 열립니다.
+`보고서:` 줄은 절대 경로로 나옵니다(위 `/tmp/lint-out` 은 예시). 같은 폴더에 `report.json`(기계용)과 `report.html`(사람용, 스크린샷 내장·외부 주소 없음)이 생깁니다. `report.html` 은 파일을 더블클릭하면 열립니다.
 
-![보고서 화면](docs/images/02-report-html.png)
+![보고서 화면](docs/images/02-report-html.ko.png)
 *`report.html` 의 페이지 스크린샷. 번호가 붙은 상자가 결함 위치이고, 그 아래에 번호별 결함 표와 이미지 위 글자 대비 표가 이어집니다.*
 
 ## 잡는 결함 8종
@@ -99,48 +101,67 @@ report: /tmp/lint-out/report.html
 | `--ignore <선택자>` | 해당 요소(와 안쪽)는 검사 제외(여러 번 가능) | `--ignore .ad-slot` |
 | `--timeout <ms>` | 전체 시간 상한(기본 60000, 허용 범위 1000~2147483647 — 범위 밖은 종료 코드 2). 실행이 이 시간을 초과하면 종료 코드 3 | `--timeout 2000` |
 | `--no-changing-text` | 1.2초 간격으로 두 번 읽는 "바뀌는 글자" 검사 생략 | |
+| `--lang <en\|ko>` | CLI 문구와 `report.html` 의 화면 언어(전역 옵션, 하위 명령 앞뒤 어디든 가능. 아래 "화면 언어" 참고) | `--lang ko` |
 | `demo` | 내장 샘플 검사(항상 종료 코드 0) | `npm start` |
 
 `refine`(판정·수정 루프)는 아직 문서화하지 않은 실험 기능이라 이 문서의 범위에 넣지 않았습니다.
 
 종료 코드: `0` 결함 없음 / `1` 결함 있음 / `2` 사용법·실행 오류 / `3` 시간 초과.
 
+### 화면 언어
+CLI 문구(도움말·요약·오류 메시지·`refine` 화면)와 생성되는 `report.html` 을 영어와 한국어로 볼 수 있습니다. 언어는 아래 순서로 정하고, 먼저 값이 있는 쪽이 이깁니다.
+
+1. `--lang en|ko` (`--lang=ko` 도 가능, 하위 명령 앞뒤 어디든)
+2. 환경변수 `LLM_PAGE_LINT_LANG` (`en` 또는 `ko`, 다른 값은 건너뜀)
+3. `LC_ALL` → `LC_MESSAGES` → `LANG`: `ko` 로 시작하는 값(예: `ko_KR.UTF-8`)이면 한국어
+
+그 밖의 값(`C`, 빈 값 포함)은 영어입니다.
+
+```bash
+node dist/cli.js check fixtures/defects.html --viewports 1024 --lang ko --out /tmp/lint-out
+LLM_PAGE_LINT_LANG=ko node dist/cli.js check fixtures/defects.html --viewports 1024 --out /tmp/lint-out
+LANG=ko_KR.UTF-8 node dist/cli.js --lang en --help      # --lang 이 LANG 보다 우선하므로 영어
+```
+결함 종류 ID(`orphan_punct` 등), `--json` 출력, `report.json`, `refine.json`, 종료 코드는 두 언어에서 똑같습니다. CLI 의 글자 출력을 비교하는 스크립트가 있다면 `--lang en` 으로 고정하세요. `examples/api.mjs` 와 `scripts/compare-axe.mjs` 는 항상 영어로 출력합니다.
+
+잘못된 `--lang` 값은 종료 코드 2 입니다(영어 화면에서는 `error: --lang must be en or ko, got "fr"`).
+
 ### 시나리오 1 — 깨끗한 페이지는 통과
 ```bash
-node dist/cli.js check fixtures/clean.html fixtures/false-positives.html --viewports 1024 --out /tmp/lint-out
+node dist/cli.js check fixtures/clean.html fixtures/false-positives.html --viewports 1024 --lang ko --out /tmp/lint-out
 ```
 ```
-checked 2 page render(s) at 1024px in 2.89s
+페이지 렌더 2개를 1024px 너비로 2.89초 동안 검사했습니다
 
-kind                      count
+종류                       개수
 ------------------------  -----
-(none)
+(없음)
 
-0 findings
-report: /tmp/lint-out/report.html
+결함 0개
+보고서: /tmp/lint-out/report.html
 ```
 종료 코드 0. `false-positives.html` 은 스크린 리더 전용 숨김 텍스트처럼 **겉보기엔 이상해도 정상인** 경우를 모아 둔 페이지라서, 오탐이 없는지 확인하는 용도입니다.
 
-![깨끗한 페이지 검사](docs/images/03-check-clean.png)
-*결함이 없으면 `(none)` 과 `0 findings`.*
+![깨끗한 페이지 검사](docs/images/03-check-clean.ko.png)
+*결함이 없으면 `(없음)` 과 `결함 0개`.*
 
 ### 시나리오 2 — 멈춘 페이지는 시간 상한으로 끊기
 ```bash
-node dist/cli.js check fixtures/hang.html --timeout 2000 --out /tmp/lint-out
+node dist/cli.js check fixtures/hang.html --timeout 2000 --lang ko --out /tmp/lint-out
 ```
 ```
-error: timed out after 2000 ms — the page may be stuck in a script loop (browser was closed)
+오류: 2000 ms 후 시간 초과: 페이지가 스크립트 루프에 갇혔을 수 있습니다(브라우저는 닫았습니다)
 ```
 종료 코드 3. 무한 루프에 빠진 페이지가 있어도 무인 파이프라인이 멈추지 않도록 브라우저 프로세스를 직접 종료합니다.
 
-![시간 초과](docs/images/04-timeout.png)
+![시간 초과](docs/images/04-timeout.ko.png)
 *시간 상한을 넘기면 브라우저를 닫고 종료 코드 3 으로 끝납니다.*
 
 ### 시나리오 3 — 일부 종류만 실패로 취급
 ```bash
-node dist/cli.js check fixtures/defects.html --viewports 1024 --fail-on clipped_text --no-changing-text --out /tmp/lint-out
+node dist/cli.js check fixtures/defects.html --viewports 1024 --fail-on clipped_text --no-changing-text --lang ko --out /tmp/lint-out
 ```
-마지막 줄 근처에 `7 findings (1 count toward the exit code)` 가 나옵니다. `--no-changing-text` 로 바뀌는 글자 검사를 뺐으므로 8건이 아닌 7건이고, 그중 `clipped_text` 1건만 종료 코드에 반영되며 나머지는 경고입니다. 처음 도입할 때 규칙을 하나씩 켜 가는 용도입니다.
+마지막 줄 근처에 `결함 7개 (종료코드에 반영되는 결함 1개)` 가 나옵니다. `--no-changing-text` 로 바뀌는 글자 검사를 뺐으므로 8건이 아닌 7건이고, 그중 `clipped_text` 1건만 종료 코드에 반영되며 나머지는 경고입니다. 처음 도입할 때 규칙을 하나씩 켜 가는 용도입니다.
 
 ### 시나리오 4 — 라이브러리로 쓰기
 ```js
@@ -190,6 +211,7 @@ node examples/api.mjs
 
 ## 설정
 - 환경변수 `PLAYWRIGHT_BROWSERS_PATH` — Chromium 설치 위치. 기본은 Playwright 사용자 캐시(macOS `~/Library/Caches/ms-playwright`, 리눅스 `~/.cache/ms-playwright`)이며, 다른 곳에 설치했을 때만 지정합니다. 리눅스에서는 Playwright 가 `$XDG_CACHE_HOME/ms-playwright` 를 보므로, 보고서 위치를 옮기려고 `XDG_CACHE_HOME` 을 바꿨다면 `PLAYWRIGHT_BROWSERS_PATH=~/.cache/ms-playwright` 도 함께 지정하거나 `--out` 을 쓰세요.
+- 환경변수 `LLM_PAGE_LINT_LANG` — 화면 언어 `en` 또는 `ko`. `--lang` 이 있으면 그쪽이 이기고, `LC_ALL`·`LC_MESSAGES`·`LANG` 보다 우선합니다. 어느 것도 한국어가 아니면 영어입니다(위 "화면 언어" 참고).
 - 환경변수 `LLM_PAGE_LINT_BROWSER_ARGS` — Chromium 에 줄 추가 플래그. 컨테이너 CI 에서는 `--no-sandbox`.
 - `LLM_PAGE_LINT_BASE_URL`·`LLM_PAGE_LINT_API_KEY`·`LLM_PAGE_LINT_JUDGE_MODEL`·`LLM_PAGE_LINT_FIXER_MODEL` — 다음 마일스톤의 `refine` 에서 모델 판정을 연결할 때만 쓰는 값입니다(`.env.example` 참고). `check` 는 모델도 키도 필요 없습니다.
 
@@ -234,23 +256,24 @@ flowchart LR
 ## 자주 겪는 문제
 | 증상 | 원인 | 해결 |
 |---|---|---|
-| `headless Chromium for Playwright is not installed` 오류(종료 코드 2) | Chromium 미설치 | `npx playwright install chromium --only-shell` |
-| 리눅스에서 `XDG_CACHE_HOME` 을 바꾼 뒤 `headless Chromium ... is not installed` (뒤에 `note: on Linux Playwright looks in $XDG_CACHE_HOME/ms-playwright` 안내가 붙음) | 리눅스의 Playwright 는 브라우저를 `$XDG_CACHE_HOME/ms-playwright` 에서 찾는데 Chromium 은 `~/.cache/ms-playwright` 에 설치됨 | `PLAYWRIGHT_BROWSERS_PATH=~/.cache/ms-playwright` 지정, 또는 `XDG_CACHE_HOME` 대신 `--out` 으로 보고서 위치 지정 |
+| `Playwright용 헤드리스 Chromium이 설치되어 있지 않습니다` 오류(영어 화면은 `headless Chromium for Playwright is not installed`)(종료 코드 2) | Chromium 미설치 | `npx playwright install chromium --only-shell` |
+| 리눅스에서 `XDG_CACHE_HOME` 을 바꾼 뒤 `Playwright용 헤드리스 Chromium이 설치되어 있지 않습니다` (뒤에 `참고: Linux 에서 Playwright 는 $XDG_CACHE_HOME/ms-playwright ...` 안내가 붙음) | 리눅스의 Playwright 는 브라우저를 `$XDG_CACHE_HOME/ms-playwright` 에서 찾는데 Chromium 은 `~/.cache/ms-playwright` 에 설치됨 | `PLAYWRIGHT_BROWSERS_PATH=~/.cache/ms-playwright` 지정, 또는 `XDG_CACHE_HOME` 대신 `--out` 으로 보고서 위치 지정 |
 | 리눅스에서 브라우저가 바로 종료 | 시스템 라이브러리 부족 | `npx playwright install --with-deps chromium --only-shell` |
 | 컨테이너·CI 에서 SIGTRAP 으로 실패 | 샌드박스 권한 | `LLM_PAGE_LINT_BROWSER_ARGS=--no-sandbox` |
 | 종료 코드 3 | 페이지가 스크립트 루프에 빠졌거나 `--timeout` 이 너무 짧음 | 값을 늘리거나 페이지의 스크립트를 점검 |
 | 컴퓨터마다 줄바꿈 위치·결과가 다름 | 글꼴 차이 | CI 에서는 고정된 Docker 이미지로 실행, 뷰포트 고정 |
-| 보고서를 못 찾겠음 | `--out` 을 안 줌 | 출력 마지막 줄의 `report:` 경로 확인(기본 `~/.cache/llm-page-lint/runs/`) |
+| 글자가 영어(또는 한국어)로 나와서 반대로 바꾸고 싶음 | 언어는 `--lang`, `LLM_PAGE_LINT_LANG`, `LC_ALL`·`LC_MESSAGES`·`LANG` 순으로 정해짐 | `--lang ko`(또는 `--lang en`)를 붙임 |
+| 보고서를 못 찾겠음 | `--out` 을 안 줌 | 출력 마지막 줄의 `보고서:` 경로 확인(기본 `~/.cache/llm-page-lint/runs/`) |
 | 캐시 폴더가 계속 쌓임 | `--out` 없이 실행할 때마다 새 폴더가 생김 | 필요 없으면 `~/.cache/llm-page-lint/runs/` 안을 지움. 실패·시간 초과한 실행은 폴더를 남기지 않음 |
 | `check fixtures` 가 종료 코드 3 | 폴더 안의 `hang.html` 은 일부러 멈추는 시험용 페이지 | 정상입니다. 개별 파일을 지정하거나 `--timeout` 을 짧게 |
-| `error: invalid viewport width "abc" ...`, `--timeout must be between 1000 and 2147483647 ms`, `--timeout must be a number of milliseconds, got "abc"` (종료 코드 2) | 옵션 값이 잘못됨(숫자가 아니거나 범위 밖) | 메시지에 나온 값과 예시(`--viewports 375,1280`, `--timeout 5000`)를 확인 |
+| `오류: --viewports "abc" 에 잘못된 뷰포트 너비가 있습니다 ...`, `오류: --timeout 값은 1000에서 2147483647 ms 사이여야 합니다 ...`, `오류: --timeout 값은 밀리초 단위의 숫자여야 합니다: "abc"` (종료 코드 2) | 옵션 값이 잘못됨(숫자가 아니거나 범위 밖) | 메시지에 나온 값과 예시(`--viewports 375,1280`, `--timeout 5000`)를 확인 |
 | `--timeout 3000000000` 이 종료 코드 2 | `--timeout` 상한은 2147483647 ms(약 24.8일)입니다. 넘는 값은 조용히 바꾸지 않고 거부합니다 | 1000~2147483647 사이 값을 쓰세요 |
-| `detector returned N findings (limit 5000)` | 같은 요소가 아주 많이 반복되는 페이지 | `--ignore <선택자>` 로 반복 요소를 빼거나 페이지를 나눠 검사 |
-| `error: invalid CSS selector "[[bad" in --ignore: use a selector such as --ignore '.ad-slot'` (종료 코드 2) | `--ignore` 에 문법이 틀린 선택자를 줌 | `.ad-slot`, `#id` 같은 올바른 CSS 선택자로 고침 |
+| `검출기가 결함 N개를 돌려줬습니다(상한 5000개)` | 같은 요소가 아주 많이 반복되는 페이지 | `--ignore <선택자>` 로 반복 요소를 빼거나 페이지를 나눠 검사 |
+| `오류: --ignore 에 잘못된 CSS 선택자가 있습니다: "[[bad". 예: --ignore '.ad-slot'` (종료 코드 2) | `--ignore` 에 문법이 틀린 선택자를 줌 | `.ad-slot`, `#id` 같은 올바른 CSS 선택자로 고침 |
 
 ## 개발·기여
 ```bash
-npm test      # 빌드 후 31개 시험(키·모델 불필요)
+npm test      # 빌드 후 47개 시험(키·모델 불필요)
 ```
 버그·제안은 이슈로 남겨 주세요. 변경 기록은 [CHANGELOG.md](CHANGELOG.md).
 

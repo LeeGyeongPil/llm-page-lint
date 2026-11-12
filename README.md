@@ -31,6 +31,8 @@ npm start
 ```
 It checks the built-in sample page (`fixtures/defects.html`) and shows the defect table and the report path. This command is a trial that always ends with exit code 0 (the real `check` returns 1 when there are defects).
 
+The output language follows your locale (`LANG`); switch it with `--lang en|ko`, for example `npm start -- --lang ko`.
+
 To check your own page:
 ```bash
 node dist/cli.js check fixtures/defects.html --viewports 1024 --out /tmp/lint-out
@@ -38,7 +40,7 @@ echo $?        # 1 = defects found
 ```
 The actual output is as follows (the same content as the screenshot above).
 ```
-checked 1 page render(s) at 1024px in 1.65s
+checked 1 page render(s) at 1024px in 1.71s
 
 kind                      count
 ------------------------  -----
@@ -97,18 +99,39 @@ For example, in the earlier `ratio=1.17 need=3`, `need=3` means that text is lar
 | `--ignore <selector>` | Exclude that element (and its contents) from the check (repeatable) | `--ignore .ad-slot` |
 | `--timeout <ms>` | Overall time limit (default 60000, allowed range 1000-2147483647; outside the range is exit code 2). If the run exceeds it, exit code 3 | `--timeout 2000` |
 | `--no-changing-text` | Skip the "changing text" check that reads twice 1.2 seconds apart | |
+| `--lang <en\|ko>` | Screen language of the CLI text and `report.html` (global option, accepted before or after the sub-command; see "Screen language" below) | `--lang ko` |
 | `demo` | Check the built-in sample (always exit code 0) | `npm start` |
 
 `refine` (the judge-and-fix loop) is an experimental feature that is not documented yet, so it is outside the scope of this document.
 
 Exit codes: `0` no defects / `1` defects found / `2` usage or runtime error / `3` timeout.
 
+### Screen language
+The CLI text (help, summary, error messages, the `refine` screen) and the generated `report.html` are available in English and Korean. The language is picked in this order, and the first one that is set wins:
+
+1. `--lang en|ko` (also `--lang=ko`, before or after the sub-command)
+2. environment variable `LLM_PAGE_LINT_LANG` (`en` or `ko`; any other value is skipped)
+3. `LC_ALL`, then `LC_MESSAGES`, then `LANG`: a value starting with `ko` (for example `ko_KR.UTF-8`) means Korean
+
+Anything else, including `C` and an empty value, gives English.
+
+```bash
+node dist/cli.js check fixtures/defects.html --viewports 1024 --lang ko --out /tmp/lint-out
+LLM_PAGE_LINT_LANG=ko node dist/cli.js check fixtures/defects.html --viewports 1024 --out /tmp/lint-out
+LANG=ko_KR.UTF-8 node dist/cli.js --lang en --help      # --lang beats LANG, so this is English
+```
+Defect kind IDs (`orphan_punct`, ...), `--json` output, `report.json`, `refine.json` and exit codes are the same in both languages. If a script compares the CLI's text output, pin it with `--lang en`. `examples/api.mjs` and `scripts/compare-axe.mjs` always print English.
+
+An invalid `--lang` value is exit code 2 (`error: --lang must be en or ko, got "fr"` in English).
+
+See the [Korean README](README.ko.md) for the same screens in Korean.
+
 ### Scenario 1 — a clean page passes
 ```bash
 node dist/cli.js check fixtures/clean.html fixtures/false-positives.html --viewports 1024 --out /tmp/lint-out
 ```
 ```
-checked 2 page render(s) at 1024px in 2.89s
+checked 2 page render(s) at 1024px in 2.92s
 
 kind                      count
 ------------------------  -----
@@ -153,7 +176,7 @@ The repository includes an almost identical example (the only difference is that
 node examples/api.mjs
 ```
 ```
-8 findings in <파일 경로>/fixtures/defects.html
+8 findings in <file path>/fixtures/defects.html
 - orphan_punct #s-orphan > p.col
 - overlap_text #s-overlap > h2
 - clipped_text #s-clip > div.card
@@ -163,7 +186,7 @@ node examples/api.mjs
 - low_contrast_over_image #s-hero > p
 - changing_text #s-timer > p
 ```
-(`<파일 경로>` is a placeholder for "file path".)
+(`<file path>` is a placeholder for the directory path.)
 
 ![Library usage](docs/images/05-api.png)
 *`lint()` returns a report object holding a `findings` array. The input is one of `{file}`, `{url}` or `{html}`.*
@@ -190,6 +213,7 @@ The functions in the table below and `LintOptions` are the public API. The const
 
 ## Configuration
 - Environment variable `PLAYWRIGHT_BROWSERS_PATH` — where Chromium is installed. The default is the Playwright user cache (macOS `~/Library/Caches/ms-playwright`, Linux `~/.cache/ms-playwright`); set it only if you installed elsewhere. On Linux, Playwright looks at `$XDG_CACHE_HOME/ms-playwright`, so if you changed `XDG_CACHE_HOME` to move the report location, also set `PLAYWRIGHT_BROWSERS_PATH=~/.cache/ms-playwright`, or use `--out`.
+- Environment variable `LLM_PAGE_LINT_LANG` — screen language, `en` or `ko`. It is overridden by `--lang` and overrides `LC_ALL`, `LC_MESSAGES` and `LANG`; with none of them set to Korean, the screen is English (see "Screen language" above).
 - Environment variable `LLM_PAGE_LINT_BROWSER_ARGS` — extra flags for Chromium. In container CI, `--no-sandbox`.
 - `LLM_PAGE_LINT_BASE_URL`, `LLM_PAGE_LINT_API_KEY`, `LLM_PAGE_LINT_JUDGE_MODEL`, `LLM_PAGE_LINT_FIXER_MODEL` — values used only when connecting model judgment in `refine` in the next milestone (see `.env.example`). `check` needs neither a model nor a key.
 
@@ -240,6 +264,7 @@ This tool **does not safely isolate untrusted pages.** The scripts of the page u
 | Fails with SIGTRAP in a container or CI | Sandbox permissions | `LLM_PAGE_LINT_BROWSER_ARGS=--no-sandbox` |
 | Exit code 3 | The page fell into a script loop, or `--timeout` is too short | Increase the value or inspect the page's scripts |
 | Line-break positions and results differ between computers | Font differences | In CI, run in a fixed Docker image and fix the viewports |
+| The text is in Korean (or English) and I want the other | The language follows `--lang`, then `LLM_PAGE_LINT_LANG`, then `LC_ALL` / `LC_MESSAGES` / `LANG` | Add `--lang en` (or `--lang ko`) |
 | Cannot find the report | `--out` was not given | Check the `report:` path on the last line of the output (default `~/.cache/llm-page-lint/runs/`) |
 | The cache folder keeps piling up | A new folder is created every time you run without `--out` | If not needed, delete the contents of `~/.cache/llm-page-lint/runs/`. Runs that fail or time out leave no folder |
 | `check fixtures` gives exit code 3 | `hang.html` in the folder is a test page that deliberately hangs | This is normal. Specify individual files or use a short `--timeout` |
@@ -250,7 +275,7 @@ This tool **does not safely isolate untrusted pages.** The scripts of the page u
 
 ## Development and contributing
 ```bash
-npm test      # build, then 31 tests (no key or model needed)
+npm test      # build, then 47 tests (no key or model needed)
 ```
 Please leave bugs and suggestions as issues. Change history is in [CHANGELOG.md](CHANGELOG.md).
 
