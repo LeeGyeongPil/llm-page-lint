@@ -9,12 +9,17 @@ export class LintTimeoutError extends Error {
   }
 }
 
+/** True when the Linux XDG_CACHE_HOME note applies (used by the CLI to localize the browser-missing message). */
+export function xdgApplies(env: NodeJS.ProcessEnv, platform: NodeJS.Platform): boolean {
+  return !(platform !== 'linux' || env.PLAYWRIGHT_BROWSERS_PATH || !env.XDG_CACHE_HOME);
+}
+
 /**
  * 리눅스의 함정: Playwright 는 브라우저를 `$XDG_CACHE_HOME/ms-playwright` 에서 찾는다.
  * 보고서 위치를 옮기려고 XDG_CACHE_HOME 만 바꾸면 설치된 Chromium 이 "없는" 것처럼 보이므로 그 경우를 짚어 준다.
  */
 function xdgHint(env: NodeJS.ProcessEnv, platform: NodeJS.Platform): string {
-  if (platform !== 'linux' || env.PLAYWRIGHT_BROWSERS_PATH || !env.XDG_CACHE_HOME) return '';
+  if (!xdgApplies(env, platform)) return '';
   return (
     `\n  note: on Linux Playwright looks in $XDG_CACHE_HOME/ms-playwright (${env.XDG_CACHE_HOME}/ms-playwright).` +
     '\n  if Chromium was installed without that XDG_CACHE_HOME, set PLAYWRIGHT_BROWSERS_PATH=~/.cache/ms-playwright' +
@@ -40,8 +45,14 @@ export class BrowserMissingError extends Error {
 /** 입력·옵션이 잘못됐다(종료 코드 2). */
 export class InputError extends Error {
   readonly exitCode = 2;
-  constructor(message: string) {
+  /** Optional stable identifier of the message; the CLI uses it to print the message in the chosen language. */
+  readonly code?: string;
+  /** Optional values that were put into the message (for example the offending input). */
+  readonly params?: Record<string, string | number>;
+  constructor(message: string, detail?: { code?: string; params?: Record<string, string | number> }) {
     super(message);
     this.name = 'InputError';
+    this.code = detail?.code;
+    this.params = detail?.params;
   }
 }

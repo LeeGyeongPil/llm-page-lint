@@ -34,7 +34,7 @@ export function resolveOutDir(inputs: string[], out?: string, env: NodeJS.Proces
   if (out !== undefined) {
     dir = resolve(out);
     if (existsSync(dir) && !statSync(dir).isDirectory()) {
-      throw new InputError(`--out "${out}" exists and is not a folder; pass a folder path such as --out lint-report`);
+      throw new InputError(`--out "${out}" exists and is not a folder; pass a folder path such as --out lint-report`, { code: 'out_not_folder', params: { out } });
     }
   } else {
     const stamp = new Date().toISOString().replace(/[:.]/g, '-');

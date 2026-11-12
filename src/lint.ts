@@ -28,7 +28,7 @@ function normalizeViewports(v: number[] | undefined): number[] {
   const list = v && v.length ? v : DEFAULT_VIEWPORTS;
   for (const w of list) {
     if (!Number.isInteger(w) || w < 200 || w > 4000) {
-      throw new InputError(`invalid viewport width "${w}": use whole numbers between 200 and 4000, e.g. --viewports 375,1280`);
+      throw new InputError(`invalid viewport width "${w}": use whole numbers between 200 and 4000, e.g. --viewports 375,1280`, { code: 'viewport', params: { value: w } });
     }
   }
   return [...new Set(list)];
@@ -51,7 +51,7 @@ async function load(page: Page, input: LintInput): Promise<void> {
   } else if ('file' in input) {
     await page.goto(pathToFileURL(resolve(input.file)).href, { waitUntil: 'load' });
   } else {
-    if (!/^https?:\/\//i.test(input.url)) throw new InputError(`url "${input.url}" must start with http:// or https://`);
+    if (!/^https?:\/\//i.test(input.url)) throw new InputError(`url "${input.url}" must start with http:// or https://`, { code: 'url_scheme', params: { url: input.url } });
     await page.goto(input.url, { waitUntil: 'load' });
   }
 }
@@ -63,20 +63,20 @@ export interface LintDetailed {
 
 /** Like {@link lint} but also returns full-page screenshots (used for report.html). */
 export async function lintDetailed(inputs: LintInput[], opts: LintOptions = {}): Promise<LintDetailed> {
-  if (!inputs.length) throw new InputError('no input: pass an HTML file, a folder of .html files, or a URL');
+  if (!inputs.length) throw new InputError('no input: pass an HTML file, a folder of .html files, or a URL', { code: 'no_input' });
   for (const i of inputs) {
     if ('file' in i) {
       try {
         readFileSync(resolve(i.file));
       } catch {
-        throw new InputError(`cannot read "${i.file}": check the path (relative paths are resolved from ${process.cwd()})`);
+        throw new InputError(`cannot read "${i.file}": check the path (relative paths are resolved from ${process.cwd()})`, { code: 'cannot_read', params: { file: i.file, cwd: process.cwd() } });
       }
     }
   }
   const viewports = normalizeViewports(opts.viewports);
   const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   if (!Number.isFinite(timeoutMs) || timeoutMs < 1000 || timeoutMs > MAX_TIMEOUT_MS) {
-    throw new InputError(`timeoutMs must be between 1000 and ${MAX_TIMEOUT_MS} ms (CLI: --timeout <ms>), got ${String(timeoutMs)}`);
+    throw new InputError(`timeoutMs must be between 1000 and ${MAX_TIMEOUT_MS} ms (CLI: --timeout <ms>), got ${String(timeoutMs)}`, { code: 'timeout_range', params: { max: MAX_TIMEOUT_MS, value: String(timeoutMs) } });
   }
   const started = Date.now();
 
@@ -113,7 +113,7 @@ export async function lintDetailed(inputs: LintInput[], opts: LintOptions = {}):
           }
           return undefined;
         }, opts.ignore);
-        if (bad !== undefined) throw new InputError(`invalid CSS selector "${bad}" in --ignore: use a selector such as --ignore '.ad-slot'`);
+        if (bad !== undefined) throw new InputError(`invalid CSS selector "${bad}" in --ignore: use a selector such as --ignore '.ad-slot'`, { code: 'bad_selector', params: { selector: bad } });
       } finally {
         if (!keepPagesOpen) await blank.close().catch(() => undefined);
       }

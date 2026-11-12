@@ -38,8 +38,8 @@ export async function refine(file: string, opts: RefineOptions = {}): Promise<Re
   const maxSections = opts.maxSections ?? 3;
   const budgetMs = (opts.budgetSeconds ?? 120) * 1000;
   const viewports = opts.viewports?.length ? opts.viewports : [1280];
-  if (!Number.isFinite(minGain) || minGain < 0) throw new InputError('min-gain must be a number >= 0');
-  if (!Number.isInteger(maxSections) || maxSections < 1) throw new InputError('max-sections must be a whole number >= 1');
+  if (!Number.isFinite(minGain) || minGain < 0) throw new InputError('min-gain must be a number >= 0', { code: 'min_gain' });
+  if (!Number.isInteger(maxSections) || maxSections < 1) throw new InputError('max-sections must be a whole number >= 1', { code: 'max_sections' });
   const log = opts.log ?? (() => undefined);
   const judge: Judge = opts.judge ?? new MockJudge();
   const fixer: Fixer = opts.fixer ?? new MockFixer();
@@ -49,7 +49,7 @@ export async function refine(file: string, opts: RefineOptions = {}): Promise<Re
   try {
     original = readFileSync(resolve(file), 'utf8');
   } catch {
-    throw new InputError('cannot read "' + file + '": check the path');
+    throw new InputError('cannot read "' + file + '": check the path', { code: 'refine_cannot_read', params: { file } });
   }
   const baseDir = dirname(resolve(file));
   const render = async (html: string): Promise<Finding[]> =>
@@ -58,7 +58,7 @@ export async function refine(file: string, opts: RefineOptions = {}): Promise<Re
   let html = original;
   let parsed = parsePage(html);
   if (!parsed.sections.length) {
-    throw new InputError('no sections found: mark sections with data-section="name" or use top-level <section>/<header>/<footer> elements');
+    throw new InputError('no sections found: mark sections with data-section="name" or use top-level <section>/<header>/<footer> elements', { code: 'no_sections' });
   }
 
   let current = await render(html);

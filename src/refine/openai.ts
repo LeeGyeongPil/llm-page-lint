@@ -20,12 +20,12 @@ export interface OpenAIConfig {
 export function configFromEnv(role: 'judge' | 'fixer', env: NodeJS.ProcessEnv = process.env): OpenAIConfig {
   const baseUrl = env.LLM_PAGE_LINT_BASE_URL;
   if (!baseUrl) {
-    throw new InputError('--' + role + ' openai needs LLM_PAGE_LINT_BASE_URL, e.g. export LLM_PAGE_LINT_BASE_URL=http://localhost:11434/v1');
+    throw new InputError('--' + role + ' openai needs LLM_PAGE_LINT_BASE_URL, e.g. export LLM_PAGE_LINT_BASE_URL=http://localhost:11434/v1', { code: 'openai_base_url', params: { role } });
   }
   const judgeModel = env.LLM_PAGE_LINT_JUDGE_MODEL;
   const model = role === 'judge' ? judgeModel : (env.LLM_PAGE_LINT_FIXER_MODEL ?? judgeModel);
   if (!model) {
-    throw new InputError('--' + role + ' openai needs ' + (role === 'judge' ? 'LLM_PAGE_LINT_JUDGE_MODEL' : 'LLM_PAGE_LINT_FIXER_MODEL (or LLM_PAGE_LINT_JUDGE_MODEL)') + ' to name the model');
+    throw new InputError('--' + role + ' openai needs ' + (role === 'judge' ? 'LLM_PAGE_LINT_JUDGE_MODEL' : 'LLM_PAGE_LINT_FIXER_MODEL (or LLM_PAGE_LINT_JUDGE_MODEL)') + ' to name the model', { code: role === 'judge' ? 'openai_model_judge' : 'openai_model_fixer' });
   }
   return { baseUrl, model, apiKey: env.LLM_PAGE_LINT_API_KEY };
 }

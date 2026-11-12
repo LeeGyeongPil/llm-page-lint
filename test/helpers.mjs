@@ -44,11 +44,11 @@ export function playwrightBrowsersPath(env = process.env, platform = process.pla
 }
 const BROWSERS = playwrightBrowsersPath(); // 부모 환경 기준 — XDG_CACHE_HOME 을 바꾸기 전에 정한다
 
-/** Run the built CLI; returns { status, stdout, stderr }. */
+/** Run the built CLI (screen language pinned to English unless the caller sets LLM_PAGE_LINT_LANG); returns { status, stdout, stderr }. */
 export function runCli(args, env = {}) {
   const r = spawnSync(process.execPath, [join(ROOT, 'dist', 'cli.js'), ...args], {
     encoding: 'utf8',
-    env: { ...process.env, PLAYWRIGHT_BROWSERS_PATH: BROWSERS, XDG_CACHE_HOME: testCache(), ...env },
+    env: { ...process.env, PLAYWRIGHT_BROWSERS_PATH: BROWSERS, XDG_CACHE_HOME: testCache(), LLM_PAGE_LINT_LANG: 'en', ...env },
     cwd: env.__cwd ?? ROOT,
     timeout: 120_000,
   });
