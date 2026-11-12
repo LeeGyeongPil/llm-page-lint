@@ -2,6 +2,21 @@
 
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.2.0] - 2026-11-12
+
+### Added
+- Screen language selection: the CLI (help, summary, refine screen, progress lines, error messages) and `report.html` are available in English and Korean. Pick one with the global `--lang en|ko` option (before or after the sub-command, `--lang=ko` also works), the `LLM_PAGE_LINT_LANG` environment variable, or the usual `LC_ALL` / `LC_MESSAGES` / `LANG` variables, in that order. A value starting with `ko` means Korean; anything else is English. An invalid `--lang` value exits with code 2; an invalid `LLM_PAGE_LINT_LANG` is skipped.
+- All user-visible text lives in one message table (`src/i18n.ts`); a test checks that both languages have the same keys.
+
+### Changed
+- `InputError` has two new optional fields, `code` and `params`, and an optional second constructor argument to set them. The CLI uses them to print library errors in the chosen language. `error.message` is unchanged (English), so existing `catch` blocks keep working.
+- `reportToHtml(report, shots, lang = 'en')` (internal, not exported from the package) takes a language argument.
+- Scripts that compare the CLI's text output should set `--lang en` (or `LLM_PAGE_LINT_LANG=en`) because a Korean `LANG` now gives Korean text. `--json`, `report.json`, `refine.json`, rule IDs, exit codes and the library API are unchanged and language-independent.
+
+### Known limitations
+- A new refine reason that is not in the translation table is shown in English on screen (the data in `refine.json` is always English).
+- `examples/api.mjs` and `scripts/compare-axe.mjs` stay English.
+
 ## [0.1.5] - 2026-11-11
 
 ### Fixed
