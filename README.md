@@ -269,6 +269,7 @@ This tool **does not safely isolate untrusted pages.** The scripts of the page u
 | The cache folder keeps piling up | A new folder is created every time you run without `--out` | If not needed, delete the contents of `~/.cache/llm-page-lint/runs/`. Runs that fail or time out leave no folder |
 | `check fixtures` gives exit code 3 | `hang.html` in the folder is a test page that deliberately hangs | This is normal. Specify individual files or use a short `--timeout` |
 | `error: invalid viewport width "abc" ...`, `--timeout must be between 1000 and 2147483647 ms`, `--timeout must be a number of milliseconds, got "abc"` (exit code 2) | The option value is wrong (not a number or out of range) | Check the value in the message and the examples (`--viewports 375,1280`, `--timeout 5000`) |
+| `error: could not open http://127.0.0.1:59999/ (net::ERR_CONNECTION_REFUSED): ...` or `net::ERR_NAME_NOT_RESOLVED` (exit code 2) | The server is not running, or the address, port or host name is wrong | Check the URL and start the server, then run again |
 | `--timeout 3000000000` gives exit code 2 | The `--timeout` upper limit is 2147483647 ms (about 24.8 days). Larger values are rejected rather than silently changed | Use a value between 1000 and 2147483647 |
 | `detector returned N findings (limit 5000)` | A page where the same element repeats a very large number of times | Exclude the repeated element with `--ignore <selector>`, or check the page in parts |
 | `error: invalid CSS selector "[[bad" in --ignore: use a selector such as --ignore '.ad-slot'` (exit code 2) | An ill-formed selector was given to `--ignore` | Fix it to a valid CSS selector such as `.ad-slot` or `#id` |
@@ -276,7 +277,7 @@ This tool **does not safely isolate untrusted pages.** The scripts of the page u
 
 ## Development and contributing
 ```bash
-npm test      # build, then 48 tests (no key or model needed)
+npm test      # build, then 49 tests (no key or model needed)
 ```
 Please leave bugs and suggestions as issues. Change history is in [CHANGELOG.md](CHANGELOG.md).
 
