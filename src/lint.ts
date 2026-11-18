@@ -52,7 +52,15 @@ async function load(page: Page, input: LintInput): Promise<void> {
     await page.goto(pathToFileURL(resolve(input.file)).href, { waitUntil: 'load' });
   } else {
     if (!/^https?:\/\//i.test(input.url)) throw new InputError(`url "${input.url}" must start with http:// or https://`, { code: 'url_scheme', params: { url: input.url } });
-    const response = await page.goto(input.url, { waitUntil: 'load' });
+    let response;
+    try {
+      response = await page.goto(input.url, { waitUntil: 'load' });
+    } catch (e) {
+      // Unreachable server / DNS failure: Playwright's message is multi-line with ANSI codes; keep only the net:: code.
+      const reason = (/net::ERR_[A-Z_]+/.exec(e instanceof Error ? e.message : '') ?? [])[0];
+      if (reason) throw new InputError(`could not open ${input.url} (${reason}): check the URL and that the server is running`, { code: 'url_unreachable', params: { url: input.url, reason } });
+      throw e;
+    }
     // A null response (same-document navigation) is not an error; redirects give the final response.
     if (response && !response.ok()) {
       throw new InputError(`URL "${input.url}" returned HTTP ${response.status()}`, { code: 'http_status', params: { url: input.url, status: response.status() } });

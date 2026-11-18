@@ -183,3 +183,33 @@ test('URL with a non-2xx HTTP status exits 2; a 200 URL exits 0', async () => {
     server.close();
   }
 });
+
+// Regression: an unreachable URL used to print Playwright's multi-line call log with ANSI codes.
+test('unreachable URL gives a one-line localized error without call log or ANSI codes', async () => {
+  const { createServer } = await import('node:http');
+  const { spawn } = await import('node:child_process');
+  // A closed port: listen on port 0, then close the server.
+  const srv = createServer();
+  await new Promise((r) => srv.listen(0, '127.0.0.1', r));
+  const { port } = srv.address();
+  await new Promise((r) => srv.close(r));
+  const run = (url, extra = []) =>
+    new Promise((done) => {
+      const c = spawn(process.execPath, [join(ROOT, 'dist', 'cli.js'), 'check', url, '--viewports', '1024', '--out', tmp('unreachable'), ...extra], {
+        env: { ...process.env, PLAYWRIGHT_BROWSERS_PATH: playwrightBrowsersPath(), XDG_CACHE_HOME: testCache(), LLM_PAGE_LINT_LANG: 'en' },
+      });
+      let out = '';
+      c.stdout.on('data', (d) => (out += d));
+      c.stderr.on('data', (d) => (out += d));
+      c.on('close', (status) => done({ status, out }));
+    });
+  const refused = await run(`http://127.0.0.1:${port}/`);
+  assert.equal(refused.status, 2, refused.out);
+  assert.ok(refused.out.startsWith(`error: could not open http://127.0.0.1:${port}/ (net::ERR_CONNECTION_REFUSED): `), refused.out);
+  assert.equal(refused.out.trim().split('\n').length, 1, refused.out);
+  assert.ok(!refused.out.includes('Call log') && !refused.out.includes('\x1b'), refused.out);
+  const dns = await run('http://no-such-host.invalid/', ['--lang', 'ko']);
+  assert.equal(dns.status, 2, dns.out);
+  assert.ok(dns.out.startsWith('오류: http://no-such-host.invalid/ 주소를 열 수 없습니다(net::ERR_NAME_NOT_RESOLVED)'), dns.out);
+  assert.ok(!dns.out.includes('Call log') && !dns.out.includes('\x1b'), dns.out);
+});
