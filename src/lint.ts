@@ -52,7 +52,11 @@ async function load(page: Page, input: LintInput): Promise<void> {
     await page.goto(pathToFileURL(resolve(input.file)).href, { waitUntil: 'load' });
   } else {
     if (!/^https?:\/\//i.test(input.url)) throw new InputError(`url "${input.url}" must start with http:// or https://`, { code: 'url_scheme', params: { url: input.url } });
-    await page.goto(input.url, { waitUntil: 'load' });
+    const response = await page.goto(input.url, { waitUntil: 'load' });
+    // A null response (same-document navigation) is not an error; redirects give the final response.
+    if (response && !response.ok()) {
+      throw new InputError(`URL "${input.url}" returned HTTP ${response.status()}`, { code: 'http_status', params: { url: input.url, status: response.status() } });
+    }
   }
 }
 

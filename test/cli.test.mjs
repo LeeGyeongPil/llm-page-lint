@@ -4,7 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { test } from 'node:test';
-import { ROOT, fixture, playwrightBrowsersPath, runCli, tmp } from './helpers.mjs';
+import { ROOT, fixture, playwrightBrowsersPath, runCli, testCache, tmp } from './helpers.mjs';
 import { LintTimeoutError, lint } from '../dist/index.js';
 
 // Regression (CI on Linux): runCli moves XDG_CACHE_HOME to a temp folder, and on Linux Playwright looks for
@@ -143,4 +143,43 @@ test('--timeout above 2147483647 is a usage error (exit 2) without an overflow w
   const max = runCli(['check', fixture('clean.html'), '--viewports', '1024', '--timeout', '2147483647', '--out', tmp('tomax')]);
   assert.equal(max.status, 0, max.stderr);
   assert.doesNotMatch(max.stderr, /TimeoutOverflowWarning/);
+});
+
+// Regression: a URL answering 404/500 used to be linted as a normal page ("0 findings", exit 0).
+test('URL with a non-2xx HTTP status exits 2; a 200 URL exits 0', async () => {
+  const { createServer } = await import('node:http');
+  const { spawn } = await import('node:child_process');
+  const server = createServer((req, res) => {
+    const code = req.url === '/ok.html' ? 200 : req.url === '/err.html' ? 500 : 404;
+    res.writeHead(code, { 'content-type': 'text/html' });
+    res.end('<!doctype html><html lang="en"><body><h1>page</h1></body></html>');
+  });
+  await new Promise((r) => server.listen(0, '127.0.0.1', r));
+  const { port } = server.address();
+  const run = (path, extra = []) =>
+    new Promise((done) => {
+      const c = spawn(process.execPath, [join(ROOT, 'dist', 'cli.js'), 'check', `http://127.0.0.1:${port}${path}`, '--viewports', '1024', '--out', tmp('httpstatus'), ...extra], {
+        env: { ...process.env, PLAYWRIGHT_BROWSERS_PATH: playwrightBrowsersPath(), XDG_CACHE_HOME: testCache(), LLM_PAGE_LINT_LANG: 'en' },
+      });
+      let out = '';
+      c.stdout.on('data', (d) => (out += d));
+      c.stderr.on('data', (d) => (out += d));
+      c.on('close', (status) => done({ status, out }));
+    });
+  try {
+    const miss = await run('/missing.html');
+    assert.equal(miss.status, 2, miss.out);
+    assert.match(miss.out, /returned HTTP 404/);
+    const err = await run('/err.html');
+    assert.equal(err.status, 2, err.out);
+    assert.match(err.out, /returned HTTP 500/);
+    const ko = await run('/missing.html', ['--lang', 'ko']);
+    assert.equal(ko.status, 2, ko.out);
+    assert.match(ko.out, /HTTP 404/);
+    const ok = await run('/ok.html');
+    assert.equal(ok.status, 0, ok.out);
+    await assert.rejects(() => lint([{ url: `http://127.0.0.1:${port}/missing.html` }], { viewports: [1024] }), (e) => e.name === 'InputError' && e.code === 'http_status' && e.params.status === 404);
+  } finally {
+    server.close();
+  }
 });

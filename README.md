@@ -104,7 +104,7 @@ For example, in the earlier `ratio=1.17 need=3`, `need=3` means that text is lar
 
 `refine` (the judge-and-fix loop) is an experimental feature that is not documented yet, so it is outside the scope of this document.
 
-Exit codes: `0` no defects / `1` defects found / `2` usage or runtime error / `3` timeout.
+Exit codes: `0` no defects / `1` defects found / `2` usage or runtime error (including a URL that answers with a non-2xx HTTP status) / `3` timeout.
 
 ### Screen language
 The CLI text (help, summary, error messages, the `refine` screen) and the generated `report.html` are available in English and Korean. The language is picked in this order, and the first one that is set wins:
@@ -272,10 +272,11 @@ This tool **does not safely isolate untrusted pages.** The scripts of the page u
 | `--timeout 3000000000` gives exit code 2 | The `--timeout` upper limit is 2147483647 ms (about 24.8 days). Larger values are rejected rather than silently changed | Use a value between 1000 and 2147483647 |
 | `detector returned N findings (limit 5000)` | A page where the same element repeats a very large number of times | Exclude the repeated element with `--ignore <selector>`, or check the page in parts |
 | `error: invalid CSS selector "[[bad" in --ignore: use a selector such as --ignore '.ad-slot'` (exit code 2) | An ill-formed selector was given to `--ignore` | Fix it to a valid CSS selector such as `.ad-slot` or `#id` |
+| `error: URL "http://…" returned HTTP 404: fix the address or the server before linting the page` (exit code 2) | The URL answered with a non-2xx status (404, 500, ...), so an error page would have been linted instead of yours | Fix the address or the server; redirects are judged by their final response |
 
 ## Development and contributing
 ```bash
-npm test      # build, then 47 tests (no key or model needed)
+npm test      # build, then 48 tests (no key or model needed)
 ```
 Please leave bugs and suggestions as issues. Change history is in [CHANGELOG.md](CHANGELOG.md).
 

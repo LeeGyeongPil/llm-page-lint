@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented here. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+## [0.2.1] - 2026-11-18
+
+### Fixed
+- `check` / `lint({ url })` now fails with exit code 2 (`InputError`, code `http_status`) when the URL answers with a non-2xx status such as 404 or 500, instead of linting the error page and reporting 0 findings.
+
 ## [0.2.0] - 2026-11-12
 
 ### Added

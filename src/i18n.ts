@@ -135,6 +135,7 @@ exit codes: 0 no findings, 1 findings, 2 usage or run error, 3 timeout
   // ---- errors that come from library exceptions (InputError.code)
   'err.viewport': 'invalid viewport width "{value}": use whole numbers between 200 and 4000, e.g. --viewports 375,1280',
   'err.url_scheme': 'url "{url}" must start with http:// or https://',
+  'err.http_status': 'URL "{url}" returned HTTP {status}: fix the address or the server before linting the page',
   'err.no_input': 'no input: pass an HTML file, a folder of .html files, or a URL',
   'err.cannot_read': 'cannot read "{file}": check the path (relative paths are resolved from {cwd})',
   'err.timeout_range': 'timeoutMs must be between 1000 and {max} ms (CLI: --timeout <ms>), got {value}',
@@ -273,6 +274,7 @@ refine 옵션:
   'err.timeoutCli': '--timeout 값은 1000에서 2147483647 ms 사이여야 합니다: "{value}"',
   'err.viewport': '잘못된 뷰포트 너비: "{value}". 200에서 4000 사이의 정수를 쓰십시오. 예: --viewports 375,1280',
   'err.url_scheme': 'URL은 http:// 또는 https:// 로 시작해야 합니다: "{url}"',
+  'err.http_status': 'URL "{url}" 응답 상태가 HTTP {status} 입니다. 주소나 서버를 고친 뒤 검사하십시오',
   'err.no_input': '입력이 없습니다. HTML 파일, .html 파일이 든 폴더, 또는 URL을 지정하십시오',
   'err.cannot_read': '"{file}" 파일을 읽을 수 없습니다. 경로를 확인하십시오(상대 경로는 {cwd} 기준으로 해석합니다)',
   'err.timeout_range': 'timeoutMs 는 1000에서 {max} ms 사이여야 합니다(CLI: --timeout <ms>): {value}',
