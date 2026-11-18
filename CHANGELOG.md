@@ -4,6 +4,11 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-11-18
+
+### Changed
+- Test stabilization: the CLI timeout test upper bound is loosened so slow browser start-up no longer fails it. No runtime change.
+
 ## [0.2.1] - 2026-11-18
 
 ### Fixed
