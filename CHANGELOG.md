@@ -4,6 +4,11 @@ All notable changes to this project are documented here. Format: [Keep a Changel
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-11-18
+
+### Fixed
+- `check` / `lint({ url })` on an unreachable URL (connection refused, DNS failure) now fails with a one-line localized `InputError` (code `url_unreachable`) instead of printing Playwright's call log with ANSI codes.
+
 ## [0.2.2] - 2026-11-18
 
 ### Changed
